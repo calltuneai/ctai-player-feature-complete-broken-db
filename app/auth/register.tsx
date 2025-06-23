@@ -166,7 +166,7 @@ export default function RegisterScreen() {
             <View style={styles.form}>
               <View style={styles.inputGroup}>
                 <View style={styles.inputRow}>
-                  <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
+                  <View style={[styles.inputContainer, styles.firstNameContainer]}>
                     <User size={20} color="#AAAAAA" />
                     <TextInput
                       style={styles.input}
@@ -176,9 +176,11 @@ export default function RegisterScreen() {
                       onChangeText={setFirstName}
                       autoCapitalize="words"
                       editable={!loading}
+                      autoComplete="given-name"
+                      textContentType="givenName"
                     />
                   </View>
-                  <View style={[styles.inputContainer, { flex: 1 }]}>
+                  <View style={[styles.inputContainer, styles.lastNameContainer]}>
                     <User size={20} color="#AAAAAA" />
                     <TextInput
                       style={styles.input}
@@ -188,13 +190,15 @@ export default function RegisterScreen() {
                       onChangeText={setLastName}
                       autoCapitalize="words"
                       editable={!loading}
+                      autoComplete="family-name"
+                      textContentType="familyName"
                     />
                   </View>
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, styles.emailContainer]}>
                   <Mail size={20} color="#AAAAAA" />
                   <TextInput
                     style={styles.input}
@@ -205,15 +209,17 @@ export default function RegisterScreen() {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     editable={!loading}
+                    autoComplete="email"
+                    textContentType="emailAddress"
                   />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <View style={styles.inputContainer}>
+                <View style={[styles.inputContainer, styles.passwordContainer]}>
                   <Lock size={20} color="#AAAAAA" />
                   <TextInput
-                    style={[styles.input, { marginRight: 40 }]}
+                    style={[styles.input, styles.passwordInput]}
                     placeholder="Password"
                     placeholderTextColor="#AAAAAA"
                     value={password}
@@ -225,6 +231,8 @@ export default function RegisterScreen() {
                     onFocus={() => setShowPasswordHints(true)}
                     onBlur={() => setShowPasswordHints(false)}
                     editable={!loading}
+                    autoComplete="new-password"
+                    textContentType="newPassword"
                   />
                   <TouchableOpacity
                     style={styles.eyeButton}
@@ -396,6 +404,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -404,6 +413,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 16,
     height: 56,
+    // Extension-resistant styling
+    position: 'relative',
+    overflow: 'hidden',
+    isolation: 'isolate', // Creates new stacking context
+  },
+  // Specific containers to prevent extension interference
+  firstNameContainer: {
+    flex: 1,
+  },
+  lastNameContainer: {
+    flex: 1,
+  },
+  emailContainer: {
+    width: '100%',
+  },
+  passwordContainer: {
+    width: '100%',
+    position: 'relative',
   },
   input: {
     flex: 1,
@@ -411,11 +438,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'Inter-Regular',
     fontSize: 16,
+    // Extension-resistant styling
+    zIndex: 1,
+    position: 'relative',
+  },
+  passwordInput: {
+    marginRight: 48, // Space for eye button
   },
   eyeButton: {
     position: 'absolute',
     right: 16,
     padding: 8,
+    zIndex: 2,
+    // Ensure button stays in place
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   button: {
     flexDirection: 'row',
@@ -425,6 +464,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 16,
     marginTop: 24,
+    // Extension-resistant styling
+    position: 'relative',
+    isolation: 'isolate',
   },
   buttonDisabled: {
     opacity: 0.7,
