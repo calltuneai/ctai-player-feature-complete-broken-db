@@ -131,6 +131,9 @@ export default function RegisterScreen() {
 
       setRegistrationStep('creating');
       
+      // Get the current URL for redirect
+      const currentUrl = Platform.OS === 'web' ? window.location.origin : 'exp://localhost:8081';
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -139,7 +142,7 @@ export default function RegisterScreen() {
             first_name: firstName.trim(),
             last_name: lastName.trim()
           },
-          emailRedirectTo: `${window.location.origin}/auth/verify`
+          emailRedirectTo: `${currentUrl}/auth/verify`
         }
       });
 
