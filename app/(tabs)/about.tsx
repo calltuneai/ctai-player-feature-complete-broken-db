@@ -50,7 +50,7 @@ export default function AboutScreen() {
             resizeMode="contain"
           />
           <Text style={styles.appName}>CallTuneAI</Text>
-          <Text style={styles.appSubtitle}>Predator Call Player</Text>
+          <Text style={styles.appSubtitle}>Predator Calling System</Text>
           <Text style={styles.appVersion}>Version 1.0.0</Text>
         </View>
 
