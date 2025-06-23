@@ -46,15 +46,6 @@ export default function RegisterScreen() {
     return password.length >= 6;
   };
 
-  const clearForm = () => {
-    setFirstName('');
-    setLastName('');
-    setEmail('');
-    setPassword('');
-    setShowPassword(false);
-    setShowPasswordHints(false);
-  };
-
   const handleRegister = async () => {
     try {
       if (isSubmitted) {
@@ -114,9 +105,6 @@ export default function RegisterScreen() {
         setIsSubmitted(true);
         setShowSuccessMessage(true);
         setError(null);
-        
-        // Clear the form after successful registration
-        clearForm();
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -154,136 +142,139 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        {showSuccessMessage ? (
-          // Success State - Replace the entire form area
-          <View style={styles.successContainer}>
-            <CheckCircle2 size={48} color="#4CD964" />
-            <Text style={styles.successTitle}>Account Created!</Text>
-            <Text style={styles.successText}>
-              Check your email to verify your account, then sign in to start using the app.
-            </Text>
-            
-            <TouchableOpacity
-              style={styles.successButton}
-              onPress={() => router.push('/auth/login')}
-            >
-              <Text style={styles.successButtonText}>Continue to Sign In</Text>
-              <ChevronRight size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          // Form State - Show the registration form
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <View style={styles.inputRow}>
-                <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                  <User size={20} color="#AAAAAA" />
+        {/* Fixed height container to prevent layout shifts */}
+        <View style={styles.contentContainer}>
+          {showSuccessMessage ? (
+            // Success State
+            <View style={styles.successContainer}>
+              <CheckCircle2 size={48} color="#4CD964" />
+              <Text style={styles.successTitle}>Account Created!</Text>
+              <Text style={styles.successText}>
+                Check your email to verify your account, then sign in to start using the app.
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.successButton}
+                onPress={() => router.push('/auth/login')}
+              >
+                <Text style={styles.successButtonText}>Continue to Sign In</Text>
+                <ChevronRight size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Form State
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <View style={styles.inputRow}>
+                  <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
+                    <User size={20} color="#AAAAAA" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="First Name"
+                      placeholderTextColor="#AAAAAA"
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      autoCapitalize="words"
+                      editable={!loading}
+                    />
+                  </View>
+                  <View style={[styles.inputContainer, { flex: 1 }]}>
+                    <User size={20} color="#AAAAAA" />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Last Name"
+                      placeholderTextColor="#AAAAAA"
+                      value={lastName}
+                      onChangeText={setLastName}
+                      autoCapitalize="words"
+                      editable={!loading}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <View style={styles.inputContainer}>
+                  <Mail size={20} color="#AAAAAA" />
                   <TextInput
                     style={styles.input}
-                    placeholder="First Name"
+                    placeholder="Email"
                     placeholderTextColor="#AAAAAA"
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    autoCapitalize="words"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                     editable={!loading}
                   />
                 </View>
-                <View style={[styles.inputContainer, { flex: 1 }]}>
-                  <User size={20} color="#AAAAAA" />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <View style={styles.inputContainer}>
+                  <Lock size={20} color="#AAAAAA" />
                   <TextInput
-                    style={styles.input}
-                    placeholder="Last Name"
+                    style={[styles.input, { marginRight: 40 }]}
+                    placeholder="Password"
                     placeholderTextColor="#AAAAAA"
-                    value={lastName}
-                    onChangeText={setLastName}
-                    autoCapitalize="words"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      setShowPasswordHints(true);
+                    }}
+                    secureTextEntry={!showPassword}
+                    onFocus={() => setShowPasswordHints(true)}
+                    onBlur={() => setShowPasswordHints(false)}
                     editable={!loading}
                   />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#AAAAAA" />
+                    ) : (
+                      <Eye size={20} color="#AAAAAA" />
+                    )}
+                  </TouchableOpacity>
                 </View>
+                {showPasswordHints && (
+                  <View style={styles.passwordHints}>
+                    <Text style={[
+                      styles.passwordHint,
+                      password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
+                    ]}>
+                      • At least 6 characters
+                    </Text>
+                  </View>
+                )}
               </View>
+
+              <TouchableOpacity
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleRegister}
+                disabled={loading}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? (
+                    registrationStep === 'validating' ? 'Validating...' :
+                    registrationStep === 'creating' ? 'Creating Account...' :
+                    'Account Created!'
+                  ) : 'Create Account'}
+                </Text>
+                {!loading && <ChevronRight size={20} color="#FFFFFF" />}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={() => router.push('/auth/login')}
+              >
+                <Text style={styles.linkText}>
+                  Already have an account? Sign in
+                </Text>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.inputContainer}>
-                <Mail size={20} color="#AAAAAA" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor="#AAAAAA"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  editable={!loading}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#AAAAAA" />
-                <TextInput
-                  style={[styles.input, { marginRight: 40 }]}
-                  placeholder="Password"
-                  placeholderTextColor="#AAAAAA"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    setShowPasswordHints(true);
-                  }}
-                  secureTextEntry={!showPassword}
-                  onFocus={() => setShowPasswordHints(true)}
-                  onBlur={() => setShowPasswordHints(false)}
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#AAAAAA" />
-                  ) : (
-                    <Eye size={20} color="#AAAAAA" />
-                  )}
-                </TouchableOpacity>
-              </View>
-              {showPasswordHints && (
-                <View style={styles.passwordHints}>
-                  <Text style={[
-                    styles.passwordHint,
-                    password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
-                  ]}>
-                    • At least 6 characters
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? (
-                  registrationStep === 'validating' ? 'Validating...' :
-                  registrationStep === 'creating' ? 'Creating Account...' :
-                  'Account Created!'
-                ) : 'Create Account'}
-              </Text>
-              {!loading && <ChevronRight size={20} color="#FFFFFF" />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push('/auth/login')}
-            >
-              <Text style={styles.linkText}>
-                Already have an account? Sign in
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -351,13 +342,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     fontSize: 14,
   },
+  // Fixed height container to prevent layout shifts
+  contentContainer: {
+    minHeight: 400,
+    width: '100%',
+  },
   successContainer: {
     alignItems: 'center',
     backgroundColor: 'rgba(76, 217, 100, 0.1)',
     borderRadius: 16,
     padding: 32,
-    marginBottom: 24,
-    minHeight: 300, // Ensure consistent height
+    height: 400, // Fixed height matching form
+    justifyContent: 'center',
   },
   successTitle: {
     fontSize: 24,
@@ -392,7 +388,7 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
-    minHeight: 300, // Ensure consistent height with success container
+    height: 400, // Fixed height matching success container
   },
   inputGroup: {
     marginBottom: 16,
