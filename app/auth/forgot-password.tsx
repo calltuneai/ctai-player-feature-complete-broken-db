@@ -51,17 +51,43 @@ export default function ForgotPasswordScreen() {
 
   const handleOpenEmail = async () => {
     if (Platform.OS === 'web') {
-      window.open('https://mail.google.com', '_blank');
+      // For web, try to open the user's default email client
+      const emailDomain = email.split('@')[1];
+      let emailUrl = 'mailto:';
+      
+      // Try to open domain-specific email clients
+      if (emailDomain?.includes('gmail.com')) {
+        emailUrl = 'https://mail.google.com';
+      } else if (emailDomain?.includes('outlook.com') || emailDomain?.includes('hotmail.com') || emailDomain?.includes('live.com')) {
+        emailUrl = 'https://outlook.live.com';
+      } else if (emailDomain?.includes('yahoo.com')) {
+        emailUrl = 'https://mail.yahoo.com';
+      } else if (emailDomain?.includes('icloud.com')) {
+        emailUrl = 'https://www.icloud.com/mail';
+      }
+      
+      window.open(emailUrl, '_blank');
       return;
     }
     
-    Linking.openURL('mailto:').catch(err => {
+    // For mobile, try to open the default email app
+    try {
+      const supported = await Linking.canOpenURL('mailto:');
+      if (supported) {
+        await Linking.openURL('mailto:');
+      } else {
+        Alert.alert(
+          'Email App Not Found',
+          'Please check your email manually or install an email app.'
+        );
+      }
+    } catch (err) {
       console.error('Failed to open email app:', err);
       Alert.alert(
         'Error',
         'Could not open email app. Please check your email manually.'
       );
-    });
+    }
   };
 
   return (
