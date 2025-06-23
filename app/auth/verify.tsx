@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { CircleCheck as CheckCircle, AlertCircle, Loader } from 'lucide-react-native';
+import { CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 export default function VerifyScreen() {
