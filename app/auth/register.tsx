@@ -122,6 +122,7 @@ export default function RegisterScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <Image
@@ -135,14 +136,17 @@ export default function RegisterScreen() {
           <DynamicText style={styles.subtitle}>Use it free for a limited time</DynamicText>
         </View>
 
-        {error && (
-          <View style={styles.errorContainer}>
-            <AlertCircle size={20} color="#FF3B30" />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        {/* Error container with fixed height to prevent layout shifts */}
+        <View style={styles.errorSection}>
+          {error && (
+            <View style={styles.errorContainer}>
+              <AlertCircle size={20} color="#FF3B30" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+        </View>
 
-        {/* Fixed height container to prevent layout shifts */}
+        {/* Main content with fixed dimensions */}
         <View style={styles.contentContainer}>
           {showSuccessMessage ? (
             // Success State
@@ -237,41 +241,51 @@ export default function RegisterScreen() {
                     )}
                   </TouchableOpacity>
                 </View>
-                {showPasswordHints && (
-                  <View style={styles.passwordHints}>
-                    <Text style={[
-                      styles.passwordHint,
-                      password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
-                    ]}>
-                      • At least 6 characters
-                    </Text>
-                  </View>
-                )}
+                
+                {/* Fixed height container for password hints */}
+                <View style={styles.passwordHintsContainer}>
+                  {showPasswordHints && (
+                    <View style={styles.passwordHints}>
+                      <Text style={[
+                        styles.passwordHint,
+                        password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
+                      ]}>
+                        • At least 6 characters
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
-              <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                <Text style={styles.buttonText}>
-                  {loading ? (
-                    registrationStep === 'validating' ? 'Validating...' :
-                    registrationStep === 'creating' ? 'Creating Account...' :
-                    'Account Created!'
-                  ) : 'Create Account'}
-                </Text>
-                {!loading && <ChevronRight size={20} color="#FFFFFF" />}
-              </TouchableOpacity>
+              {/* Fixed position button container */}
+              <View style={styles.buttonSection}>
+                <TouchableOpacity
+                  style={[styles.button, loading && styles.buttonDisabled]}
+                  onPress={handleRegister}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.buttonContent}>
+                    <Text style={styles.buttonText}>
+                      {loading ? (
+                        registrationStep === 'validating' ? 'Validating...' :
+                        registrationStep === 'creating' ? 'Creating Account...' :
+                        'Account Created!'
+                      ) : 'Create Account'}
+                    </Text>
+                    {!loading && <ChevronRight size={20} color="#FFFFFF" />}
+                  </View>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.linkButton}
-                onPress={() => router.push('/auth/login')}
-              >
-                <Text style={styles.linkText}>
-                  Already have an account? Sign in
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  onPress={() => router.push('/auth/login')}
+                >
+                  <Text style={styles.linkText}>
+                    Already have an account? Sign in
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>
@@ -327,13 +341,17 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     textAlign: 'center',
   },
+  // Fixed height section for errors to prevent layout shifts
+  errorSection: {
+    minHeight: 60, // Reserve space for error messages
+    marginBottom: 16,
+  },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 59, 48, 0.1)',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 24,
   },
   errorText: {
     flex: 1,
@@ -344,7 +362,7 @@ const styles = StyleSheet.create({
   },
   // Fixed height container to prevent layout shifts
   contentContainer: {
-    minHeight: 400,
+    minHeight: 450,
     width: '100%',
   },
   successContainer: {
@@ -352,7 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(76, 217, 100, 0.1)',
     borderRadius: 16,
     padding: 32,
-    height: 400, // Fixed height matching form
+    height: 450, // Fixed height matching form
     justifyContent: 'center',
   },
   successTitle: {
@@ -388,7 +406,8 @@ const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
-    height: 400, // Fixed height matching success container
+    height: 450, // Fixed height matching success container
+    justifyContent: 'space-between',
   },
   inputGroup: {
     marginBottom: 16,
@@ -417,46 +436,58 @@ const styles = StyleSheet.create({
     right: 16,
     padding: 8,
   },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0496FF',
-    borderRadius: 8,
-    paddingVertical: 16,
-    marginTop: 24,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    marginRight: 8,
-  },
-  linkButton: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  linkText: {
-    color: '#0496FF',
-    fontSize: 16,
-    fontFamily: 'Inter-Medium'
+  // Fixed height container for password hints to prevent layout shifts
+  passwordHintsContainer: {
+    height: 24, // Reserve space for hints
+    marginTop: 8,
   },
   passwordHints: {
-    marginTop: 8,
     paddingHorizontal: 4,
   },
   passwordHint: {
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    marginBottom: 4,
   },
   passwordHintValid: {
     color: '#4CD964',
   },
   passwordHintInvalid: {
     color: '#FF3B30',
+  },
+  // Fixed position button section
+  buttonSection: {
+    marginTop: 'auto', // Push to bottom of form container
+    paddingTop: 16,
+  },
+  button: {
+    backgroundColor: '#0496FF',
+    borderRadius: 8,
+    height: 56, // Fixed height
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  linkButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  linkText: {
+    color: '#0496FF',
+    fontSize: 16,
+    fontFamily: 'Inter-Medium'
   },
 });
