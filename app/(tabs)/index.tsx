@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, X, Filter, CreditCard as Edit, Trash2, Share } from 'lucide-react-native';
+import { Search, X, Filter, CreditCard as Edit, Trash2, Share, Upload } from 'lucide-react-native';
 import { useSounds } from '../../context/SoundContext';
 import SoundCard from '../../components/SoundCard';
 import EmptyState from '../../components/EmptyState';
 import { Sound, SoundCategory } from '../../types/sound';
 import * as Haptics from 'expo-haptics';
 import DynamicText from '../../components/DynamicText';
+import { useRouter } from 'expo-router';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -17,6 +18,7 @@ const BRAND_COLORS = {
 };
 
 export default function LibraryScreen() {
+  const router = useRouter();
   const { sounds, deleteSound } = useSounds();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -38,6 +40,8 @@ export default function LibraryScreen() {
     return matchesSearch && matchesCategory && matchesFavorites;
   });
 
+  const userUploadedSounds = sounds.filter(sound => !sound.isSample);
+
   const handleOptionsPress = (sound: Sound) => {
     setSelectedSound(sound);
     setOptionsModalVisible(true);
@@ -48,6 +52,17 @@ export default function LibraryScreen() {
 
   const handleDeleteSound = () => {
     if (!selectedSound) return;
+
+    // Don't allow deletion of sample sounds
+    if (selectedSound.isSample) {
+      if (Platform.OS === 'web') {
+        alert('Sample sounds cannot be deleted.');
+      } else {
+        Alert.alert('Cannot Delete', 'Sample sounds cannot be deleted.');
+      }
+      setOptionsModalVisible(false);
+      return;
+    }
 
     if (Platform.OS === 'web') {
       if (confirm(`Are you sure you want to delete "${selectedSound.name}"?`)) {
@@ -81,10 +96,12 @@ export default function LibraryScreen() {
 
   const handleEditSound = () => {
     setOptionsModalVisible(false);
+    // TODO: Implement edit functionality
   };
 
   const handleShareSound = () => {
     setOptionsModalVisible(false);
+    // TODO: Implement share functionality
   };
 
   const renderCategoryFilter = () => (
@@ -142,6 +159,38 @@ export default function LibraryScreen() {
     </View>
   );
 
+  const renderEmptyState = () => {
+    if (userUploadedSounds.length === 0) {
+      // No user-uploaded sounds, show upload encouragement
+      return (
+        <View style={styles.emptyStateContainer}>
+          <View style={styles.emptyIconContainer}>
+            <Upload size={64} color={BRAND_COLORS.brightBlue} />
+          </View>
+          <Text style={styles.emptyTitle}>Ready to Upload Your Sounds?</Text>
+          <Text style={styles.emptyDescription}>
+            Upload your CallTuneAI-generated predator calling sounds to build your personal library.
+          </Text>
+          <TouchableOpacity 
+            style={styles.uploadButton} 
+            onPress={() => router.push('/upload')}
+          >
+            <Upload size={20} color="#FFFFFF" />
+            <Text style={styles.uploadButtonText}>Upload Sounds</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    } else if (filteredSounds.length === 0) {
+      // Has sounds but none match current filter
+      return (
+        <EmptyState
+          type={showFavoritesOnly ? 'favorites' : 'search'}
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -177,9 +226,7 @@ export default function LibraryScreen() {
       {renderCategoryFilter()}
 
       {filteredSounds.length === 0 ? (
-        <EmptyState
-          type={sounds.length === 0 ? 'library' : (showFavoritesOnly ? 'favorites' : 'search')}
-        />
+        renderEmptyState()
       ) : (
         <FlatList
           data={filteredSounds}
@@ -210,7 +257,12 @@ export default function LibraryScreen() {
             <View style={styles.modalHandle} />
 
             {selectedSound && (
-              <Text style={styles.modalTitle}>{selectedSound.name}</Text>
+              <>
+                <Text style={styles.modalTitle}>{selectedSound.name}</Text>
+                {selectedSound.isSample && (
+                  <Text style={styles.sampleBadge}>Sample Sound</Text>
+                )}
+              </>
             )}
 
             <TouchableOpacity style={styles.modalOption} onPress={handleEditSound}>
@@ -223,9 +275,21 @@ export default function LibraryScreen() {
               <Text style={styles.modalOptionText}>Share Sound</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.modalOption} onPress={handleDeleteSound}>
-              <Trash2 size={24} color="#FF3B30" />
-              <Text style={[styles.modalOptionText, { color: '#FF3B30' }]}>Delete Sound</Text>
+            <TouchableOpacity 
+              style={[
+                styles.modalOption, 
+                selectedSound?.isSample && styles.disabledModalOption
+              ]} 
+              onPress={handleDeleteSound}
+              disabled={selectedSound?.isSample}
+            >
+              <Trash2 size={24} color={selectedSound?.isSample ? "#666666" : "#FF3B30"} />
+              <Text style={[
+                styles.modalOptionText, 
+                { color: selectedSound?.isSample ? "#666666" : "#FF3B30" }
+              ]}>
+                {selectedSound?.isSample ? "Cannot Delete Sample" : "Delete Sound"}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -319,6 +383,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(4, 150, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: 'Orbitron-Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyDescription: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#AAAAAA',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: BRAND_COLORS.brightBlue,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  uploadButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -343,8 +451,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  sampleBadge: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: BRAND_COLORS.brightBlue,
+    textAlign: 'center',
+    marginBottom: 16,
+    backgroundColor: 'rgba(4, 150, 255, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'center',
   },
   modalOption: {
     flexDirection: 'row',
@@ -352,6 +472,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  disabledModalOption: {
+    opacity: 0.5,
   },
   modalOptionText: {
     fontSize: 16,

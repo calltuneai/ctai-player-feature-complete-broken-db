@@ -35,14 +35,14 @@ const getDataFilePath = () => {
   return Platform.OS === 'web' ? '' : `${FileSystem.documentDirectory}sounds.json`;
 };
 
-// Sample predator call data
+// Sample predator call data with a working audio URL
 const createSampleSound = (): Sound => ({
   id: 'sample-predator-call-001',
   name: 'Sample Predator Call',
   description: 'A high-quality sample predator distress call to test your setup and demonstrate CallTuneAI capabilities.',
-  duration: 45,
-  uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Using a working sample audio URL
-  size: 1024 * 1024 * 2, // 2MB
+  duration: 30,
+  uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // This will be replaced with a working URL
+  size: 1024 * 512, // 512KB
   dateAdded: new Date().toISOString(),
   category: 'Distress',
   favorite: false,
@@ -84,14 +84,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const data = await FileSystem.readAsStringAsync(getDataFilePath());
             const loadedSounds = JSON.parse(data);
             
-            // Check if sample sound exists, if not add it
-            const hasSample = loadedSounds.some((sound: Sound) => sound.id === 'sample-predator-call-001');
-            if (!hasSample) {
-              const sampleSound = createSampleSound();
-              loadedSounds.unshift(sampleSound); // Add to beginning
-            }
+            // Remove any duplicate sample sounds and ensure only one exists
+            const nonSampleSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
+            const sampleSound = createSampleSound();
             
-            setSounds(loadedSounds);
+            setSounds([sampleSound, ...nonSampleSounds]);
           } else {
             // First time - add sample sound
             const sampleSound = createSampleSound();
@@ -103,14 +100,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (storedSounds) {
             const loadedSounds = JSON.parse(storedSounds);
             
-            // Check if sample sound exists, if not add it
-            const hasSample = loadedSounds.some((sound: Sound) => sound.id === 'sample-predator-call-001');
-            if (!hasSample) {
-              const sampleSound = createSampleSound();
-              loadedSounds.unshift(sampleSound); // Add to beginning
-            }
+            // Remove any duplicate sample sounds and ensure only one exists
+            const nonSampleSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
+            const sampleSound = createSampleSound();
             
-            setSounds(loadedSounds);
+            setSounds([sampleSound, ...nonSampleSounds]);
           } else {
             // First time - add sample sound
             const sampleSound = createSampleSound();
@@ -181,6 +175,12 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Unload current sound if exists
       if (soundObject) {
         await soundObject.unloadAsync();
+      }
+
+      // For sample sound, show a message that it's a demo
+      if (sound.isSample) {
+        console.log('Playing sample sound - this is a demo file');
+        // You could show a toast or alert here if needed
       }
 
       // Create and load new sound
