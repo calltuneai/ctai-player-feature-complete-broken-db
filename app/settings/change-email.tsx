@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, ArrowLeft, Loader } from 'lucide-react-native';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import * as Haptics from 'expo-haptics';
-import DynamicText from '../../../components/DynamicText';
+import DynamicText from '../../components/DynamicText';
 
 export default function ChangeEmailScreen() {
   const router = useRouter();

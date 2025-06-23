@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, ScrollView, Platform, Image, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut } from 'lucide-react-native';
+import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut, Mail } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../lib/auth';
 import { getUserSettings, createUserSettings, updateUserSettings } from '../../lib/check-user';
@@ -127,6 +127,10 @@ export default function SettingsScreen() {
 
   const handleUpgrade = () => {
     Linking.openURL('https://calltuneai.com');
+  };
+
+  const handleChangeEmail = () => {
+    router.push('/settings/change-email');
   };
 
   const handleClearLibrary = () => {
@@ -347,6 +351,28 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color="#000000" />
           </TouchableOpacity>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity 
+            style={styles.accountOption}
+            onPress={handleChangeEmail}
+          >
+            <View style={styles.accountOptionContent}>
+              <View style={styles.accountIconContainer}>
+                <Mail size={20} color={BRAND_COLORS.brightBlue} />
+              </View>
+              <View style={styles.accountTextContainer}>
+                <Text style={styles.accountOptionTitle}>Change Email Address</Text>
+                <Text style={styles.accountOptionDescription}>
+                  Update your email address and verify the new one
+                </Text>
+              </View>
+              <ChevronRight size={20} color="#AAAAAA" />
+            </View>
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.dangerSection}>
           <View style={styles.dangerHeader}>
@@ -511,6 +537,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#000000',
     marginRight: 8,
+  },
+  accountOption: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  accountOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  accountIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(4, 150, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  accountTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  accountOptionTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  accountOptionDescription: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#AAAAAA',
+    lineHeight: 16,
   },
   dangerSection: {
     marginTop: 32,
