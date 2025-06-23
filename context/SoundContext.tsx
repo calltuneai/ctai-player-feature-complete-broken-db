@@ -87,11 +87,17 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const data = await FileSystem.readAsStringAsync(getDataFilePath());
             const loadedSounds = JSON.parse(data);
             
-            // Remove any duplicate sample sounds and ensure only one exists
-            const nonSampleSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
-            const sampleSound = createSampleSound();
+            // Check if user has uploaded any sounds
+            const userSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
             
-            setSounds([sampleSound, ...nonSampleSounds]);
+            if (userSounds.length === 0) {
+              // No user sounds, include sample
+              const sampleSound = createSampleSound();
+              setSounds([sampleSound]);
+            } else {
+              // User has sounds, don't include sample by default
+              setSounds(userSounds);
+            }
           } else {
             // First time - add sample sound
             const sampleSound = createSampleSound();
@@ -103,11 +109,17 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (storedSounds) {
             const loadedSounds = JSON.parse(storedSounds);
             
-            // Remove any duplicate sample sounds and ensure only one exists
-            const nonSampleSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
-            const sampleSound = createSampleSound();
+            // Check if user has uploaded any sounds
+            const userSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
             
-            setSounds([sampleSound, ...nonSampleSounds]);
+            if (userSounds.length === 0) {
+              // No user sounds, include sample
+              const sampleSound = createSampleSound();
+              setSounds([sampleSound]);
+            } else {
+              // User has sounds, don't include sample by default
+              setSounds(userSounds);
+            }
           } else {
             // First time - add sample sound
             const sampleSound = createSampleSound();
@@ -395,7 +407,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      setSounds(prevSounds => [...prevSounds, sound]);
+      // When user adds their first sound, remove sample sounds
+      const currentUserSounds = sounds.filter(s => !s.isSample);
+      if (currentUserSounds.length === 0) {
+        // This is the first user sound, remove all sample sounds
+        setSounds([sound]);
+      } else {
+        // Add to existing user sounds
+        setSounds(prevSounds => [...prevSounds.filter(s => !s.isSample), sound]);
+      }
     } catch (error) {
       console.error('Error adding sound:', error);
       throw error;
@@ -406,12 +426,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const soundToDelete = sounds.find(s => s.id === id);
       if (!soundToDelete) return;
-
-      // Don't allow deletion of sample sound
-      if (soundToDelete.isSample) {
-        console.log('Cannot delete sample sound');
-        return;
-      }
 
       if (currentSound && currentSound.id === id) {
         if (webPlaybackInterval) {
@@ -433,7 +447,16 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      setSounds(prevSounds => prevSounds.filter(s => s.id !== id));
+      const remainingSounds = sounds.filter(s => s.id !== id);
+      const remainingUserSounds = remainingSounds.filter(s => !s.isSample);
+      
+      // If no user sounds remain, add back the sample sound
+      if (remainingUserSounds.length === 0) {
+        const sampleSound = createSampleSound();
+        setSounds([sampleSound]);
+      } else {
+        setSounds(remainingSounds);
+      }
     } catch (error) {
       console.error('Error deleting sound:', error);
     }
