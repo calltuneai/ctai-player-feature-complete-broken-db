@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, ScrollView, Platform, Image, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut } from 'lucide-react-native';
+import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut, Mail } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { signOut } from '../../lib/auth';
 import { getUserSettings, createUserSettings, updateUserSettings } from '../../lib/check-user';
@@ -127,6 +127,10 @@ export default function SettingsScreen() {
 
   const handleUpgrade = () => {
     Linking.openURL('https://calltuneai.com');
+  };
+
+  const handleChangeEmail = () => {
+    router.push('/settings/change-email');
   };
 
   const handleClearLibrary = () => {
@@ -347,6 +351,26 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color="#000000" />
           </TouchableOpacity>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity 
+            style={styles.accountItem}
+            onPress={handleChangeEmail}
+          >
+            <View style={styles.accountItemContent}>
+              <View style={styles.iconContainer}>
+                <Mail size={20} color={BRAND_COLORS.brightBlue} />
+              </View>
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingText}>Change Email Address</Text>
+                <Text style={styles.settingDescription}>Update your account email</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color="#AAAAAA" />
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.dangerSection}>
           <View style={styles.dangerHeader}>
@@ -511,6 +535,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#000000',
     marginRight: 8,
+  },
+  accountItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  accountItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   dangerSection: {
     marginTop: 32,
