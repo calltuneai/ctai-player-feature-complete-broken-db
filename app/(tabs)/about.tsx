@@ -67,12 +67,12 @@ export default function AboutScreen() {
             style={styles.upgradeButton}
             onPress={handleUpgrade}
           >
-            <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
+            <Text style={styles.upgradeButtonText}>Upgrade to Studio</Text>
           </TouchableOpacity>
         </View>
         
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About CallTuneAI</Text>
+          <Text style={styles.sectionTitle}>About CallTuneAI & PREYR</Text>
           <Text style={styles.paragraph}>
             CallTuneAI Player is a lightweight app designed to play predator calls — either 
             uploaded by you or synced directly from your CallTuneAI Studio account (coming soon).</Text>
