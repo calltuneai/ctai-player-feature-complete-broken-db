@@ -78,9 +78,6 @@ export default function RegisterScreen() {
 
       setRegistrationStep('creating');
       
-      // Get the current URL for redirect
-      const currentUrl = Platform.OS === 'web' ? window.location.origin : 'exp://localhost:8081';
-      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -88,8 +85,7 @@ export default function RegisterScreen() {
           data: {
             first_name: firstName.trim(),
             last_name: lastName.trim()
-          },
-          emailRedirectTo: `${currentUrl}/auth/verify`
+          }
         }
       });
 
@@ -152,7 +148,7 @@ export default function RegisterScreen() {
             <View style={styles.successTextContainer}>
               <Text style={styles.successTitle}>Account Created Successfully!</Text>
               <Text style={styles.successText}>
-                Please check your email to verify your account before signing in. Look for an email from Supabase Auth and click the verification link.
+                Please check your email to verify your account before signing in. Look for an email from Supabase Auth and click the verification link. After verification, you'll be able to use the app offline in remote areas.
               </Text>
             </View>
           </View>
