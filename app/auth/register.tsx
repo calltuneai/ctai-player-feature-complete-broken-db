@@ -154,133 +154,136 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        {showSuccessMessage && (
+        {showSuccessMessage ? (
+          // Success State - Replace the entire form area
           <View style={styles.successContainer}>
-            <CheckCircle2 size={24} color="#4CD964" />
-            <View style={styles.successTextContainer}>
-              <Text style={styles.successTitle}>Account Created!</Text>
-              <Text style={styles.successText}>
-                Check your email to verify your account, then sign in to start using the app.
-              </Text>
+            <CheckCircle2 size={48} color="#4CD964" />
+            <Text style={styles.successTitle}>Account Created!</Text>
+            <Text style={styles.successText}>
+              Check your email to verify your account, then sign in to start using the app.
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => router.push('/auth/login')}
+            >
+              <Text style={styles.successButtonText}>Continue to Sign In</Text>
+              <ChevronRight size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          // Form State - Show the registration form
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <View style={styles.inputRow}>
+                <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
+                  <User size={20} color="#AAAAAA" />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="First Name"
+                    placeholderTextColor="#AAAAAA"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    autoCapitalize="words"
+                    editable={!loading}
+                  />
+                </View>
+                <View style={[styles.inputContainer, { flex: 1 }]}>
+                  <User size={20} color="#AAAAAA" />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Last Name"
+                    placeholderTextColor="#AAAAAA"
+                    value={lastName}
+                    onChangeText={setLastName}
+                    autoCapitalize="words"
+                    editable={!loading}
+                  />
+                </View>
+              </View>
             </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputContainer}>
+                <Mail size={20} color="#AAAAAA" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#AAAAAA"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  editable={!loading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputContainer}>
+                <Lock size={20} color="#AAAAAA" />
+                <TextInput
+                  style={[styles.input, { marginRight: 40 }]}
+                  placeholder="Password"
+                  placeholderTextColor="#AAAAAA"
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setShowPasswordHints(true);
+                  }}
+                  secureTextEntry={!showPassword}
+                  onFocus={() => setShowPasswordHints(true)}
+                  onBlur={() => setShowPasswordHints(false)}
+                  editable={!loading}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#AAAAAA" />
+                  ) : (
+                    <Eye size={20} color="#AAAAAA" />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {showPasswordHints && (
+                <View style={styles.passwordHints}>
+                  <Text style={[
+                    styles.passwordHint,
+                    password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
+                  ]}>
+                    • At least 6 characters
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? (
+                  registrationStep === 'validating' ? 'Validating...' :
+                  registrationStep === 'creating' ? 'Creating Account...' :
+                  'Account Created!'
+                ) : 'Create Account'}
+              </Text>
+              {!loading && <ChevronRight size={20} color="#FFFFFF" />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={() => router.push('/auth/login')}
+            >
+              <Text style={styles.linkText}>
+                Already have an account? Sign in
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
-
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <View style={styles.inputRow}>
-              <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                <User size={20} color="#AAAAAA" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="First Name"
-                  placeholderTextColor="#AAAAAA"
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                  editable={!showSuccessMessage}
-                />
-              </View>
-              <View style={[styles.inputContainer, { flex: 1 }]}>
-                <User size={20} color="#AAAAAA" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Last Name"
-                  placeholderTextColor="#AAAAAA"
-                  value={lastName}
-                  onChangeText={setLastName}
-                  autoCapitalize="words"
-                  editable={!showSuccessMessage}
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#AAAAAA" />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#AAAAAA"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                editable={!showSuccessMessage}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#AAAAAA" />
-              <TextInput
-                style={[styles.input, { marginRight: 40 }]}
-                placeholder="Password"
-                placeholderTextColor="#AAAAAA"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  setShowPasswordHints(true);
-                }}
-                secureTextEntry={!showPassword}
-                onFocus={() => setShowPasswordHints(true)}
-                onBlur={() => setShowPasswordHints(false)}
-                editable={!showSuccessMessage}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color="#AAAAAA" />
-                ) : (
-                  <Eye size={20} color="#AAAAAA" />
-                )}
-              </TouchableOpacity>
-            </View>
-            {showPasswordHints && !showSuccessMessage && (
-              <View style={styles.passwordHints}>
-                <Text style={[
-                  styles.passwordHint,
-                  password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
-                ]}>
-                  • At least 6 characters
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.button,
-              (loading || showSuccessMessage) && styles.buttonDisabled
-            ]}
-            onPress={handleRegister}
-            disabled={loading || isSubmitted || showSuccessMessage}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? (
-                registrationStep === 'validating' ? 'Validating...' :
-                registrationStep === 'creating' ? 'Creating Account...' :
-                'Account Created!'
-              ) : showSuccessMessage ? (
-                'Check Your Email'
-              ) : 'Create Account'}
-            </Text>
-            {!loading && !showSuccessMessage && <ChevronRight size={20} color="#FFFFFF" />}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.linkText}>
-              Already have an account? Sign in
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -349,31 +352,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   successContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     backgroundColor: 'rgba(76, 217, 100, 0.1)',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 32,
     marginBottom: 24,
-  },
-  successTextContainer: {
-    flex: 1,
-    marginLeft: 12,
+    minHeight: 300, // Ensure consistent height
   },
   successTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 24,
+    fontFamily: 'Orbitron-Bold',
     color: '#4CD964',
-    marginBottom: 4,
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   successText: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#FFFFFF',
-    lineHeight: 20,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  successButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CD964',
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  successButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
   form: {
     width: '100%',
+    minHeight: 300, // Ensure consistent height with success container
   },
   inputGroup: {
     marginBottom: 16,
