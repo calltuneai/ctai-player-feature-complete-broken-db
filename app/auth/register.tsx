@@ -119,7 +119,7 @@ export default function RegisterScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        {/* Compact Header */}
+        {/* Prominent Branding Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
@@ -295,23 +295,23 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 24,
-    marginBottom: 2,
+    fontSize: 32,
+    marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 16,
+    fontSize: 24,
   },
   titleSection: {
     alignItems: 'center',
