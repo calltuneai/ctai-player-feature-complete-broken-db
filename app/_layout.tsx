@@ -25,11 +25,13 @@ import {
 import {
   RobotoSlab_400Regular,
   RobotoSlab_700Bold,
-} from '@expo-google-fonts/roboto-slab';
+} from '@expo-google-fonts/roboto-slab'
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  useFrameworkReady();
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
   const [authState, setAuthState] = useState<{
