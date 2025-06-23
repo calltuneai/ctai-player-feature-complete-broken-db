@@ -46,6 +46,15 @@ export default function RegisterScreen() {
     return password.length >= 6;
   };
 
+  const clearForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPassword('');
+    setShowPassword(false);
+    setShowPasswordHints(false);
+  };
+
   const handleRegister = async () => {
     try {
       if (isSubmitted) {
@@ -105,6 +114,9 @@ export default function RegisterScreen() {
         setIsSubmitted(true);
         setShowSuccessMessage(true);
         setError(null);
+        
+        // Clear the form after successful registration
+        clearForm();
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -146,9 +158,9 @@ export default function RegisterScreen() {
           <View style={styles.successContainer}>
             <CheckCircle2 size={24} color="#4CD964" />
             <View style={styles.successTextContainer}>
-              <Text style={styles.successTitle}>Account Created Successfully!</Text>
+              <Text style={styles.successTitle}>Account Created!</Text>
               <Text style={styles.successText}>
-                Please check your email to verify your account before signing in. Look for an email from Supabase Auth and click the verification link. After verification, you'll be able to use the app offline in remote areas.
+                Check your email to verify your account, then sign in to start using the app.
               </Text>
             </View>
           </View>
@@ -228,7 +240,7 @@ export default function RegisterScreen() {
                 )}
               </TouchableOpacity>
             </View>
-            {showPasswordHints && (
+            {showPasswordHints && !showSuccessMessage && (
               <View style={styles.passwordHints}>
                 <Text style={[
                   styles.passwordHint,
@@ -254,7 +266,7 @@ export default function RegisterScreen() {
                 registrationStep === 'creating' ? 'Creating Account...' :
                 'Account Created!'
               ) : showSuccessMessage ? (
-                'Check your Email to Verify'
+                'Check Your Email'
               ) : 'Create Account'}
             </Text>
             {!loading && !showSuccessMessage && <ChevronRight size={20} color="#FFFFFF" />}
@@ -287,31 +299,31 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     paddingTop: 10,
   },
   logo: {
-    width: 160,
-    height: 160,
+    width: 120,
+    height: 120,
     marginBottom: 8,
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 28,
     marginBottom: 4,
   },
   title: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
     fontSize: 20,
-    marginTop: 48,
+    marginTop: 32,
     marginBottom: 8,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 24,
+    fontSize: 20,
     marginBottom: 16,
     textAlign: 'center',
   },
