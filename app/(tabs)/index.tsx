@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, X, Filter, CreditCard as Edit, Trash2, Share, Upload, Play } from 'lucide-react-native';
+import { Search, X, Filter, CreditCard as Edit, Trash2, Share } from 'lucide-react-native';
 import { useSounds } from '../../context/SoundContext';
 import SoundCard from '../../components/SoundCard';
 import EmptyState from '../../components/EmptyState';
 import { Sound, SoundCategory } from '../../types/sound';
 import * as Haptics from 'expo-haptics';
 import DynamicText from '../../components/DynamicText';
-import { useRouter } from 'expo-router';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -18,8 +17,7 @@ const BRAND_COLORS = {
 };
 
 export default function LibraryScreen() {
-  const router = useRouter();
-  const { sounds, deleteSound, loadAndPlaySound } = useSounds();
+  const { sounds, deleteSound } = useSounds();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -40,19 +38,11 @@ export default function LibraryScreen() {
     return matchesSearch && matchesCategory && matchesFavorites;
   });
 
-  const userUploadedSounds = sounds.filter(sound => !sound.isSample);
-  const sampleSounds = sounds.filter(sound => sound.isSample);
-  const hasSampleSound = sampleSounds.length > 0;
-
   const handleOptionsPress = (sound: Sound) => {
     setSelectedSound(sound);
     setOptionsModalVisible(true);
     if (Platform.OS !== 'web') {
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        // Haptics not available, continue silently
-      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -79,11 +69,7 @@ export default function LibraryScreen() {
               deleteSound(selectedSound.id);
               setOptionsModalVisible(false);
               if (Platform.OS !== 'web') {
-                try {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                } catch (error) {
-                  // Haptics not available, continue silently
-                }
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               }
             },
             style: "destructive"
@@ -95,23 +81,10 @@ export default function LibraryScreen() {
 
   const handleEditSound = () => {
     setOptionsModalVisible(false);
-    // TODO: Implement edit functionality
   };
 
   const handleShareSound = () => {
     setOptionsModalVisible(false);
-    // TODO: Implement share functionality
-  };
-
-  const handleTrySample = async () => {
-    if (sampleSounds.length > 0) {
-      try {
-        await loadAndPlaySound(sampleSounds[0]);
-      } catch (error) {
-        console.error('Error playing sample:', error);
-        Alert.alert('Playback Error', 'Unable to play the sample sound.');
-      }
-    }
   };
 
   const renderCategoryFilter = () => (
@@ -169,58 +142,6 @@ export default function LibraryScreen() {
     </View>
   );
 
-  const renderEmptyState = () => {
-    if (userUploadedSounds.length === 0) {
-      // No user-uploaded sounds, show upload encouragement with sample option
-      return (
-        <View style={styles.emptyStateContainer}>
-          <View style={styles.emptyIconContainer}>
-            <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.emptyLogo}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.emptyTitle}>Ready to Upload Your Sounds?</Text>
-          <Text style={styles.emptyDescription}>
-            Upload your CallTuneAI-generated predator calling sounds to build your personal library.
-          </Text>
-          
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity 
-              style={styles.uploadButton} 
-              onPress={() => router.push('/(tabs)/upload')}
-            >
-              <Upload size={20} color="#FFFFFF" />
-              <Text style={styles.uploadButtonText}>Upload Sounds</Text>
-            </TouchableOpacity>
-            
-            {hasSampleSound && (
-              <View style={styles.sampleSection}>
-                <Text style={styles.sampleText}>Don't have a file? Try our sample:</Text>
-                <TouchableOpacity 
-                  style={styles.sampleButton} 
-                  onPress={handleTrySample}
-                >
-                  <Play size={16} color={BRAND_COLORS.brightBlue} />
-                  <Text style={styles.sampleButtonText}>Test Sample Sound</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </View>
-      );
-    } else if (filteredSounds.length === 0) {
-      // Has sounds but none match current filter
-      return (
-        <EmptyState
-          type={showFavoritesOnly ? 'favorites' : 'search'}
-        />
-      );
-    }
-    return null;
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -256,7 +177,9 @@ export default function LibraryScreen() {
       {renderCategoryFilter()}
 
       {filteredSounds.length === 0 ? (
-        renderEmptyState()
+        <EmptyState
+          type={sounds.length === 0 ? 'library' : (showFavoritesOnly ? 'favorites' : 'search')}
+        />
       ) : (
         <FlatList
           data={filteredSounds}
@@ -287,12 +210,7 @@ export default function LibraryScreen() {
             <View style={styles.modalHandle} />
 
             {selectedSound && (
-              <>
-                <Text style={styles.modalTitle}>{selectedSound.name}</Text>
-                {selectedSound.isSample && (
-                  <Text style={styles.sampleBadge}>Sample Sound</Text>
-                )}
-              </>
+              <Text style={styles.modalTitle}>{selectedSound.name}</Text>
             )}
 
             <TouchableOpacity style={styles.modalOption} onPress={handleEditSound}>
@@ -305,14 +223,9 @@ export default function LibraryScreen() {
               <Text style={styles.modalOptionText}>Share Sound</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.modalOption} 
-              onPress={handleDeleteSound}
-            >
+            <TouchableOpacity style={styles.modalOption} onPress={handleDeleteSound}>
               <Trash2 size={24} color="#FF3B30" />
-              <Text style={[styles.modalOptionText, { color: "#FF3B30" }]}>
-                Delete Sound
-              </Text>
+              <Text style={[styles.modalOptionText, { color: '#FF3B30' }]}>Delete Sound</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -406,86 +319,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(4, 150, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Orbitron-Bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  emptyDescription: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#AAAAAA',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
-  },
-  actionButtonsContainer: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRAND_COLORS.brightBlue,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-    marginBottom: 24,
-  },
-  uploadButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  sampleSection: {
-    alignItems: 'center',
-  },
-  sampleText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#AAAAAA',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  sampleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(4, 150, 255, 0.1)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(4, 150, 255, 0.3)',
-    gap: 8,
-  },
-  sampleButtonText: {
-    color: BRAND_COLORS.brightBlue,
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -510,20 +343,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 20,
     textAlign: 'center',
-  },
-  sampleBadge: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: BRAND_COLORS.brightBlue,
-    textAlign: 'center',
-    marginBottom: 16,
-    backgroundColor: 'rgba(4, 150, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'center',
   },
   modalOption: {
     flexDirection: 'row',

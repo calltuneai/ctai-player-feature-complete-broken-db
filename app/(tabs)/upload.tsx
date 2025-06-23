@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { useSounds } from '../../context/SoundContext';
 import { Sound, SoundCategory } from '../../types/sound';
+import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 
 const BRAND_COLORS = {
@@ -55,21 +56,17 @@ export default function UploadScreen() {
   const pickSound = async () => {
     try {
       if (Platform.OS === 'web') {
-        // Show helpful message for web preview
-        Alert.alert(
-          "File Upload Not Available",
-          "File picking is not available in the web preview. On a real device, this would allow you to select audio files from your device.\n\nTip: Check out the sample sound already in your Library to test playback!",
-          [
-            {
-              text: "Go to Library",
-              onPress: () => router.push('/(tabs)/')
-            },
-            {
-              text: "OK",
-              style: "cancel"
-            }
-          ]
-        );
+        alert("File picking is not fully supported in the web preview. This would allow selecting audio files on a real device.");
+        
+        const mockFile = {
+          uri: 'https://example.com/sample-audio.mp3',
+          name: 'Sample Predator Call.mp3',
+          size: 1024 * 1024 * 2,
+          duration: 45,
+        };
+        
+        setSelectedFile(mockFile);
+        setSoundName('Sample Predator Call');
         return;
       }
       
@@ -110,9 +107,14 @@ export default function UploadScreen() {
         duration: duration,
       });
       
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
     } catch (error) {
       console.error('Error picking document:', error);
-      if (Platform.OS !== 'web') {
+      if (Platform.OS === 'web') {
+        alert('Failed to select audio file.');
+      } else {
         Alert.alert('Error', 'Failed to select audio file.');
       }
     }
@@ -122,11 +124,17 @@ export default function UploadScreen() {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       setTags([...tags, currentTag.trim()]);
       setCurrentTag('');
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     }
   };
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   };
 
   const handleUpload = async () => {
@@ -162,14 +170,17 @@ export default function UploadScreen() {
         category: category,
         favorite: false,
         tags: tags,
-        isSample: false
       };
       
       await addSound(newSound);
       
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
       if (Platform.OS === 'web') {
         if (confirm('Your sound has been added to the library. Go to Library or Upload Another?')) {
-          router.push('/(tabs)/');
+          router.push('/');
         } else {
           resetForm();
         }
@@ -180,7 +191,7 @@ export default function UploadScreen() {
           [
             {
               text: 'Go to Library',
-              onPress: () => router.push('/(tabs)/'),
+              onPress: () => router.push('/'),
             },
             {
               text: 'Upload Another',
@@ -264,11 +275,6 @@ export default function UploadScreen() {
               </View>
               <Text style={styles.uploadText}>Tap to select an audio file</Text>
               <Text style={styles.uploadSubtext}>MP3, WAV, M4A, AAC, OGG</Text>
-              {Platform.OS === 'web' && (
-                <Text style={styles.webNotice}>
-                  Note: File upload not available in web preview
-                </Text>
-              )}
             </>
           )}
         </TouchableOpacity>
@@ -445,13 +451,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
-  },
-  webNotice: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#FF9500',
-    marginTop: 8,
-    textAlign: 'center',
   },
   selectedFileContainer: {
     width: '100%',

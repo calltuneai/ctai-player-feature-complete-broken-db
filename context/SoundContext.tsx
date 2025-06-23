@@ -35,23 +35,6 @@ const getDataFilePath = () => {
   return Platform.OS === 'web' ? '' : `${FileSystem.documentDirectory}sounds.json`;
 };
 
-// Sample predator call data using the actual uploaded file
-const createSampleSound = (): Sound => ({
-  id: 'sample-predator-call-001',
-  name: 'Sample Rabbit Distress Call',
-  description: 'A high-quality sample rabbit distress call to test your setup and demonstrate CallTuneAI capabilities.',
-  duration: 45, // Approximate duration - will be updated when loaded
-  uri: Platform.OS === 'web' 
-    ? '/assets/audio/demo_rabbit_distress.wav' // Web path
-    : require('../assets/audio/demo_rabbit_distress.wav'),
-  size: 1024 * 1024, // 1MB approximate
-  dateAdded: new Date().toISOString(),
-  category: 'Distress',
-  favorite: false,
-  tags: ['sample', 'demo', 'distress', 'rabbit'],
-  isSample: true
-});
-
 export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [soundObject, setSoundObject] = useState<Audio.Sound | null>(null);
@@ -62,21 +45,19 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [playbackDuration, setPlaybackDuration] = useState(0);
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [webPlaybackInterval, setWebPlaybackInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize audio and load saved sounds
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Only set audio mode on native platforms
-        if (Platform.OS !== 'web') {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: true,
-            shouldDuckAndroid: false,
-          });
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: false,
+        });
 
+        if (Platform.OS !== 'web') {
           const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
           if (!dirInfo.exists) {
             await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
@@ -85,54 +66,16 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const fileInfo = await FileSystem.getInfoAsync(getDataFilePath());
           if (fileInfo.exists) {
             const data = await FileSystem.readAsStringAsync(getDataFilePath());
-            const loadedSounds = JSON.parse(data);
-            
-            // Check if user has uploaded any sounds
-            const userSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
-            
-            if (userSounds.length === 0) {
-              // No user sounds, include sample
-              const sampleSound = createSampleSound();
-              setSounds([sampleSound]);
-            } else {
-              // User has sounds, don't include sample by default
-              setSounds(userSounds);
-            }
-          } else {
-            // First time - add sample sound
-            const sampleSound = createSampleSound();
-            setSounds([sampleSound]);
+            setSounds(JSON.parse(data));
           }
         } else {
-          // Web platform
           const storedSounds = localStorage.getItem('sounds');
-          if (storedSounds) {
-            const loadedSounds = JSON.parse(storedSounds);
-            
-            // Check if user has uploaded any sounds
-            const userSounds = loadedSounds.filter((sound: Sound) => !sound.isSample);
-            
-            if (userSounds.length === 0) {
-              // No user sounds, include sample
-              const sampleSound = createSampleSound();
-              setSounds([sampleSound]);
-            } else {
-              // User has sounds, don't include sample by default
-              setSounds(userSounds);
-            }
-          } else {
-            // First time - add sample sound
-            const sampleSound = createSampleSound();
-            setSounds([sampleSound]);
-          }
+          if (storedSounds) setSounds(JSON.parse(storedSounds));
         }
 
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio:', error);
-        // Still add sample sound even if audio initialization fails
-        const sampleSound = createSampleSound();
-        setSounds([sampleSound]);
         setIsInitialized(true);
       }
     };
@@ -140,11 +83,8 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     initialize();
 
     return () => {
-      if (webPlaybackInterval) {
-        clearInterval(webPlaybackInterval);
-      }
-      if (soundObject && Platform.OS !== 'web') {
-        soundObject.unloadAsync().catch(console.warn);
+      if (soundObject) {
+        soundObject.unloadAsync();
       }
     };
   }, []);
@@ -168,9 +108,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     saveSounds();
   }, [sounds, isInitialized]);
 
-  // Playback status updates - only on native platforms
+  // Playback status updates
   useEffect(() => {
-    if (!soundObject || Platform.OS === 'web') return;
+    if (!soundObject) return;
 
     const interval = setInterval(async () => {
       try {
@@ -190,58 +130,17 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const loadAndPlaySound = async (sound: Sound) => {
     try {
-      // Web platform fallback
-      if (Platform.OS === 'web') {
-        console.log('Audio playback simulated in web preview');
-        console.log('Playing:', sound.name);
-        
-        // Clear any existing interval
-        if (webPlaybackInterval) {
-          clearInterval(webPlaybackInterval);
-        }
-        
-        setCurrentSound(sound);
-        setIsPlaying(true);
-        setPlaybackDuration(sound.duration);
-        setPlaybackPosition(0);
-        
-        // Simulate playback progress
-        const interval = setInterval(() => {
-          setPlaybackPosition(prev => {
-            const newPosition = prev + 0.5;
-            if (newPosition >= sound.duration) {
-              if (isLooping) {
-                return 0;
-              } else {
-                setIsPlaying(false);
-                clearInterval(interval);
-                return 0;
-              }
-            }
-            return newPosition;
-          });
-        }, 500);
-        
-        setWebPlaybackInterval(interval);
-        return;
-      }
-
       // Unload current sound if exists
       if (soundObject) {
         await soundObject.unloadAsync();
       }
 
-      // For sample sound, show a message that it's a demo
-      if (sound.isSample) {
-        console.log('Playing sample sound - demo file');
-      }
-
       // Create and load new sound
       const { sound: newSound } = await Audio.Sound.createAsync(
-        sound.isSample ? sound.uri : { uri: sound.uri },
+        { uri: sound.uri },
         {
           shouldPlay: true,
-          isLooping: isLooping,
+          isLooping: true,
           volume: 1.0,
           shouldCorrectPitch: highQualityEnabled,
         },
@@ -260,46 +159,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(true);
     } catch (error) {
       console.error('Error loading and playing sound:', error);
-      
-      // Fallback for web or when audio fails
-      if (Platform.OS === 'web') {
-        setCurrentSound(sound);
-        setIsPlaying(false);
-        setPlaybackDuration(sound.duration);
-        setPlaybackPosition(0);
-      } else {
-        throw error;
-      }
+      throw error;
     }
   };
 
   const playSound = async () => {
-    if (Platform.OS === 'web') {
-      if (currentSound && !isPlaying) {
-        setIsPlaying(true);
-        
-        // Resume web playback simulation
-        const interval = setInterval(() => {
-          setPlaybackPosition(prev => {
-            const newPosition = prev + 0.5;
-            if (newPosition >= (currentSound?.duration || 0)) {
-              if (isLooping) {
-                return 0;
-              } else {
-                setIsPlaying(false);
-                clearInterval(interval);
-                return 0;
-              }
-            }
-            return newPosition;
-          });
-        }, 500);
-        
-        setWebPlaybackInterval(interval);
-      }
-      return;
-    }
-    
     if (!soundObject) return;
     try {
       await soundObject.playAsync();
@@ -310,15 +174,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const pauseSound = async () => {
-    if (Platform.OS === 'web') {
-      setIsPlaying(false);
-      if (webPlaybackInterval) {
-        clearInterval(webPlaybackInterval);
-        setWebPlaybackInterval(null);
-      }
-      return;
-    }
-    
     if (!soundObject) return;
     try {
       await soundObject.pauseAsync();
@@ -329,16 +184,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const stopSound = async () => {
-    if (Platform.OS === 'web') {
-      setIsPlaying(false);
-      setPlaybackPosition(0);
-      if (webPlaybackInterval) {
-        clearInterval(webPlaybackInterval);
-        setWebPlaybackInterval(null);
-      }
-      return;
-    }
-    
     if (!soundObject) return;
     
     try {
@@ -352,11 +197,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const seekSound = async (position: number) => {
-    if (Platform.OS === 'web') {
-      setPlaybackPosition(position);
-      return;
-    }
-    
     if (!soundObject) return;
     
     try {
@@ -368,17 +208,12 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleLooping = async () => {
-    const newLoopingState = !isLooping;
-    setIsLooping(newLoopingState);
-    
-    if (Platform.OS === 'web') {
-      return;
-    }
-    
     if (!soundObject) return;
     
     try {
+      const newLoopingState = !isLooping;
       await soundObject.setIsLoopingAsync(newLoopingState);
+      setIsLooping(newLoopingState);
     } catch (error) {
       console.error('Error toggling loop mode:', error);
     }
@@ -407,15 +242,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      // When user adds their first sound, remove sample sounds
-      const currentUserSounds = sounds.filter(s => !s.isSample);
-      if (currentUserSounds.length === 0) {
-        // This is the first user sound, remove all sample sounds
-        setSounds([sound]);
-      } else {
-        // Add to existing user sounds
-        setSounds(prevSounds => [...prevSounds.filter(s => !s.isSample), sound]);
-      }
+      setSounds(prevSounds => [...prevSounds, sound]);
     } catch (error) {
       console.error('Error adding sound:', error);
       throw error;
@@ -428,11 +255,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (!soundToDelete) return;
 
       if (currentSound && currentSound.id === id) {
-        if (webPlaybackInterval) {
-          clearInterval(webPlaybackInterval);
-          setWebPlaybackInterval(null);
-        }
-        if (soundObject && Platform.OS !== 'web') {
+        if (soundObject) {
           await soundObject.unloadAsync();
           setSoundObject(null);
         }
@@ -447,16 +270,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
 
-      const remainingSounds = sounds.filter(s => s.id !== id);
-      const remainingUserSounds = remainingSounds.filter(s => !s.isSample);
-      
-      // If no user sounds remain, add back the sample sound
-      if (remainingUserSounds.length === 0) {
-        const sampleSound = createSampleSound();
-        setSounds([sampleSound]);
-      } else {
-        setSounds(remainingSounds);
-      }
+      setSounds(prevSounds => prevSounds.filter(s => s.id !== id));
     } catch (error) {
       console.error('Error deleting sound:', error);
     }
