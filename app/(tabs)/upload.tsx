@@ -56,17 +56,10 @@ export default function UploadScreen() {
   const pickSound = async () => {
     try {
       if (Platform.OS === 'web') {
-        alert("File picking is not fully supported in the web preview. This would allow selecting audio files on a real device.");
-        
-        const mockFile = {
-          uri: 'https://example.com/sample-audio.mp3',
-          name: 'Sample Predator Call.mp3',
-          size: 1024 * 1024 * 2,
-          duration: 45,
-        };
-        
-        setSelectedFile(mockFile);
-        setSoundName('Sample Predator Call');
+        Alert.alert(
+          "File Upload Not Available", 
+          "File picking is not available in the web preview. This feature works on mobile devices where you can select audio files from your device storage."
+        );
         return;
       }
       
@@ -112,11 +105,7 @@ export default function UploadScreen() {
       }
     } catch (error) {
       console.error('Error picking document:', error);
-      if (Platform.OS === 'web') {
-        alert('Failed to select audio file.');
-      } else {
-        Alert.alert('Error', 'Failed to select audio file.');
-      }
+      Alert.alert('Error', 'Failed to select audio file.');
     }
   };
 
@@ -139,20 +128,12 @@ export default function UploadScreen() {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      if (Platform.OS === 'web') {
-        alert('Please select an audio file to upload.');
-      } else {
-        Alert.alert('Missing File', 'Please select an audio file to upload.');
-      }
+      Alert.alert('Missing File', 'Please select an audio file to upload.');
       return;
     }
     
     if (!soundName.trim()) {
-      if (Platform.OS === 'web') {
-        alert('Please provide a name for your sound.');
-      } else {
-        Alert.alert('Missing Name', 'Please provide a name for your sound.');
-      }
+      Alert.alert('Missing Name', 'Please provide a name for your sound.');
       return;
     }
     
@@ -178,37 +159,25 @@ export default function UploadScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      if (Platform.OS === 'web') {
-        if (confirm('Your sound has been added to the library. Go to Library or Upload Another?')) {
-          router.push('/');
-        } else {
-          resetForm();
-        }
-      } else {
-        Alert.alert(
-          'Upload Successful',
-          'Your sound has been added to the library.',
-          [
-            {
-              text: 'Go to Library',
-              onPress: () => router.push('/'),
+      Alert.alert(
+        'Upload Successful',
+        'Your sound has been added to the library.',
+        [
+          {
+            text: 'Go to Library',
+            onPress: () => router.push('/'),
+          },
+          {
+            text: 'Upload Another',
+            onPress: () => {
+              resetForm();
             },
-            {
-              text: 'Upload Another',
-              onPress: () => {
-                resetForm();
-              },
-            },
-          ]
-        );
-      }
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error uploading sound:', error);
-      if (Platform.OS === 'web') {
-        alert('There was an error adding your sound.');
-      } else {
-        Alert.alert('Upload Failed', 'There was an error adding your sound.');
-      }
+      Alert.alert('Upload Failed', 'There was an error adding your sound.');
     } finally {
       setIsUploading(false);
     }
