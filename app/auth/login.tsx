@@ -12,7 +12,15 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { storeAuthData } from '../../lib/auth';
-import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Loader, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import DynamicText from '../../components/DynamicText';
+
+const BRAND_COLORS = {
+  deepBlue: '#2C3E50',
+  accentBlue: '#0496FF',
+  brightBlue: '#00A6FF',
+  lightGray: '#D3D3D3',
+};
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -85,69 +93,73 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
+        {/* Consistent Branding Header - Same as Register */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>
-            Sign in to continue using CallTuneAI
-          </Text>
+          <DynamicText style={styles.brandTitle}>CallTuneAI</DynamicText>
+          <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
         </View>
 
+        {/* Title Section - Same spacing as Register */}
+        <View style={styles.titleSection}>
+          <DynamicText style={styles.title}>Welcome Back</DynamicText>
+          <DynamicText style={styles.subtitle}>Sign in to continue using CallTuneAI</DynamicText>
+        </View>
+
+        {/* Error Display - Same style as Register */}
         {error && (
           <View style={styles.errorContainer}>
-            <AlertCircle size={20} color="#FF3B30" />
+            <AlertCircle size={16} color="#FF3B30" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
 
+        {/* Form - Same layout as Register */}
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
-              <Mail size={20} color="#AAAAAA" />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#AAAAAA"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                editable={!loading}
-              />
-            </View>
+          {/* Email Field - Same style as Register */}
+          <View style={styles.inputContainer}>
+            <Mail size={18} color="#AAAAAA" />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#AAAAAA"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
           </View>
 
-          <View style={styles.inputGroup}>
-            <View style={styles.inputContainer}>
-              <Lock size={20} color="#AAAAAA" />
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor="#AAAAAA"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  editable={!loading}
-                />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#AAAAAA" />
-                  ) : (
-                    <Eye size={20} color="#AAAAAA" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
+          {/* Password Field - Same style as Register */}
+          <View style={styles.inputContainer}>
+            <Lock size={18} color="#AAAAAA" />
+            <TextInput
+              style={[styles.input, { paddingRight: 40 }]}
+              placeholder="Password"
+              placeholderTextColor="#AAAAAA"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff size={18} color="#AAAAAA" />
+              ) : (
+                <Eye size={18} color="#AAAAAA" />
+              )}
+            </TouchableOpacity>
           </View>
 
+          {/* Forgot Password Link */}
           <TouchableOpacity
             style={styles.forgotPasswordButton}
             onPress={handleForgotPassword}
@@ -157,24 +169,20 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* Submit Button - Same style as Register */}
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
+            activeOpacity={0.8}
           >
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <Loader size={24} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Signing In...</Text>
-              </View>
-            ) : (
-              <>
-                <Text style={styles.buttonText}>Sign In</Text>
-                <ChevronRight size={20} color="#FFFFFF" />
-              </>
-            )}
+            <Text style={styles.buttonText}>
+              {loading ? 'Signing In...' : 'Sign In'}
+            </Text>
+            {!loading && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
+          {/* Register Link - Same style as Register */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/register')}
@@ -198,25 +206,41 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 24,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
   },
   logo: {
     width: 120,
     height: 120,
-    marginBottom: 32,
+    marginBottom: 16,
   },
-  title: {
-    fontSize: 32,
+  brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  brandSubtitle: {
+    fontFamily: 'Orbitron-Medium',
+    color: BRAND_COLORS.brightBlue,
+    fontSize: 24,
+  },
+  titleSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontFamily: 'Orbitron-Bold',
+    color: '#FFFFFF',
+    fontSize: 20,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
     textAlign: 'center',
@@ -227,20 +251,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 59, 48, 0.1)',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   errorText: {
     flex: 1,
     marginLeft: 8,
     color: '#FF3B30',
     fontFamily: 'Inter-Medium',
-    fontSize: 14,
+    fontSize: 13,
   },
   form: {
     width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 16,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -248,7 +269,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 56,
+    height: 50,
+    marginBottom: 16,
   },
   input: {
     flex: 1,
@@ -257,13 +279,20 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     fontSize: 16,
   },
-  passwordContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   eyeButton: {
-    padding: 8,
+    position: 'absolute',
+    right: 16,
+    padding: 6,
+  },
+  forgotPasswordButton: {
+    alignItems: 'flex-end',
+    marginTop: -8,
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#0496FF',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
   },
   button: {
     flexDirection: 'row',
@@ -271,8 +300,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    paddingVertical: 16,
-    marginTop: 24,
+    height: 50,
+    marginBottom: 16,
+    gap: 6,
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -281,31 +311,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    marginRight: 8,
   },
   linkButton: {
     alignItems: 'center',
-    marginTop: 16,
+    paddingVertical: 8,
   },
   linkText: {
     color: '#0496FF',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter-Medium',
   },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8
-  },
-  forgotPasswordButton: {
-    alignItems: 'flex-end',
-    marginTop: -8,
-    marginBottom: 8,
-  },
-  forgotPasswordText: {
-    color: '#0496FF',
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  }
 });
