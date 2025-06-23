@@ -25,13 +25,19 @@ import {
 import {
   RobotoSlab_400Regular,
   RobotoSlab_700Bold,
-} from '@expo-google-fonts/roboto-slab';
+} from '@expo-google-fonts/roboto-slab'
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  useFrameworkReady();
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
+  const [authState, setAuthState] = useState<{
+    isAuthenticated: boolean;
+    isOffline?: boolean;
+  }>({ isAuthenticated: false });
   const router = useRouter();
   const segments = useSegments();
 
@@ -53,15 +59,23 @@ export default function RootLayout() {
 
   const handleAuthRouting = useCallback(async () => {
     try {
-      const { isAuthenticated } = await checkAuth();
+      const authResult = await checkAuth();
       const currentRoute = segments[0] || '';
 
-      if (__DEV__) console.log('Auth status:', isAuthenticated, 'Current route:', currentRoute);
+      if (__DEV__) {
+        console.log('Auth status:', authResult.isAuthenticated, 'Current route:', currentRoute);
+        if (authResult.isOffline) console.log('Running in offline mode');
+      }
 
-      if (!isAuthenticated && currentRoute !== 'auth') {
+      setAuthState({
+        isAuthenticated: authResult.isAuthenticated,
+        isOffline: authResult.isOffline
+      });
+
+      if (!authResult.isAuthenticated && currentRoute !== 'auth') {
         if (__DEV__) console.log('Redirecting to register');
         router.replace('/auth/register');
-      } else if (isAuthenticated && currentRoute === 'auth') {
+      } else if (authResult.isAuthenticated && currentRoute === 'auth') {
         if (__DEV__) console.log('Redirecting to tabs');
         router.replace('/(tabs)');
       }
@@ -103,12 +117,16 @@ export default function RootLayout() {
     );
   }
 
-  console.log('Initial auth check done:', appIsReady);
   return (
     <SoundProvider>
       <View style={styles.container}>
         <Stack screenOptions={{ headerShown: false }} />
         <StatusBar style="light" />
+        {authState.isOffline && (
+          <View style={styles.offlineIndicator}>
+            <View style={styles.offlineDot} />
+          </View>
+        )}
       </View>
     </SoundProvider>
   );
@@ -122,5 +140,17 @@ const styles = StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  offlineIndicator: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1000,
+  },
+  offlineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF9500',
   },
 });

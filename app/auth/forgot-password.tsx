@@ -8,8 +8,6 @@ import {
   Platform,
   Image,
   KeyboardAvoidingView,
-  Alert,
-  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
@@ -32,11 +30,14 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://calltuneai.com/auth/reset-password',
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+        redirectTo: `${window.location.origin}/auth/reset`,
       });
 
-      if (error) throw error;
+      if (error) {
+        setError(error.message);
+        return;
+      }
 
       setResetSent(true);
     } catch (err: any) {
@@ -45,21 +46,6 @@ export default function ForgotPasswordScreen() {
       setLoading(false);
     }
   };
-
-   const handleOpenEmail = async () => {
-      if (Platform.OS === 'web') {
-        window.open('https://mail.google.com', '_blank');
-        return;
-      }
-    
-      Linking.openURL('mailto:').catch(err => {
-        console.error('Failed to open email app:', err);
-        Alert.alert(
-          'Error',
-          'Could not open email app. Please check your email manually.'
-        );
-      });
-    };
 
   return (
     <KeyboardAvoidingView
@@ -94,15 +80,8 @@ export default function ForgotPasswordScreen() {
             <View style={styles.successTextContainer}>
               <Text style={styles.successTitle}>Reset Email Sent!</Text>
               <Text style={styles.successText}>
-                We've sent a password reset link to your email address.
+                We've sent a password reset link to your email address. Please check your email and follow the instructions to reset your password.
               </Text>
-              <TouchableOpacity
-                style={styles.checkEmailButton}
-                onPress={handleOpenEmail}
-              >
-                <Mail size={20} color="#FFFFFF" />
-                <Text style={styles.checkEmailText}>Open Email App</Text>
-              </TouchableOpacity>
             </View>
           </View>
         ) : (
@@ -225,22 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  checkEmailButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4CD964',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-  },
-  checkEmailText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    marginLeft: 8,
+    lineHeight: 20,
   },
   form: {
     width: '100%',

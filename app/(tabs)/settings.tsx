@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert, ScrollView, Platform, Image, Linking, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut } from 'lucide-react-native';
+import { Bluetooth, Volume2, Moon, Shield, Wand as Wand2, Radio, Crown, ChevronRight, TriangleAlert as AlertTriangle, Move3d, Waves, User, LogOut, Mail } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
+import { signOut } from '../../lib/auth';
+import { getUserSettings, createUserSettings, updateUserSettings } from '../../lib/check-user';
 import { useRouter } from 'expo-router';
 import { useSounds } from '../../context/SoundContext';
 import * as Haptics from 'expo-haptics';
@@ -25,6 +27,7 @@ export default function SettingsScreen() {
   const [keepScreenOn, setKeepScreenOn] = useState(true);
   const [bluetoothAutoConnect, setBluetoothAutoConnect] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [userSettings, setUserSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,22 +42,37 @@ export default function SettingsScreen() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Fetch user profile
+      const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error('Database error:', error);
+      if (profileError) {
+        console.error('Profile error:', profileError);
         throw new Error('Failed to fetch user profile');
       }
 
-      if (!data) {
-        throw new Error('User profile not found');
-      }
+      setUserData(profile);
 
-      setUserData(data);
+      // Fetch user settings
+      const settings = await getUserSettings(user.id);
+      if (settings) {
+        setUserSettings(settings);
+        setHighQualityEnabled(settings.high_quality_enabled ?? true);
+        setKeepScreenOn(settings.keep_screen_on ?? true);
+        setBluetoothAutoConnect(settings.bluetooth_auto_connect ?? true);
+      } else {
+        // Create default settings
+        const defaultSettings = {
+          high_quality_enabled: true,
+          bluetooth_auto_connect: true,
+          keep_screen_on: true,
+        };
+        const newSettings = await createUserSettings(user.id, defaultSettings);
+        setUserSettings(newSettings);
+      }
     } catch (error) {
       console.error('Error fetching user data:', error);
       if (error instanceof Error) {
@@ -67,33 +85,52 @@ export default function SettingsScreen() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       router.replace('/auth/login');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
-  const handleToggle = (setting: string, value: boolean) => {
+  const handleToggle = async (setting: string, value: boolean) => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    let updateData: any = {};
+    
     switch (setting) {
       case 'keepScreenOn':
         setKeepScreenOn(value);
+        updateData.keep_screen_on = value;
         break;
       case 'bluetoothAutoConnect':
         setBluetoothAutoConnect(value);
+        updateData.bluetooth_auto_connect = value;
         break;
       case 'highQualityPlayback':
         setHighQualityEnabled(value);
+        updateData.high_quality_enabled = value;
         break;
+    }
+
+    // Update settings in database
+    try {
+      await updateUserSettings(user.id, updateData);
+    } catch (error) {
+      console.error('Error updating settings:', error);
     }
   };
 
   const handleUpgrade = () => {
     Linking.openURL('https://calltuneai.com');
+  };
+
+  const handleChangeEmail = () => {
+    router.push('/settings/change-email');
   };
 
   const handleClearLibrary = () => {
@@ -157,7 +194,7 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>Profile</Text>
           {loading ? (
             <ActivityIndicator color={BRAND_COLORS.brightBlue} />
-          ) : userData && Object.keys(userData).length > 0 ? (
+          ) : userData ? (
             <View style={styles.profileContainer}>
               <View style={styles.profileHeader}>
                 <View style={styles.avatarContainer}>
@@ -171,8 +208,10 @@ export default function SettingsScreen() {
               
               <View style={styles.profileDetails}>
                 <View style={styles.profileDetail}>
-                  <Text style={styles.detailLabel}>Phone</Text>
-                  <Text style={styles.detailValue}>{userData.phone}</Text>
+                  <Text style={styles.detailLabel}>Verification Status</Text>
+                  <Text style={[styles.detailValue, userData.is_verified ? styles.active : styles.expired]}>
+                    {userData.is_verified ? 'Verified' : 'Pending Verification'}
+                  </Text>
                 </View>
                 <View style={styles.profileDetail}>
                   <Text style={styles.detailLabel}>Trial Status</Text>
@@ -180,7 +219,7 @@ export default function SettingsScreen() {
                     {userData.is_trial_expired ? 'Expired' : 'Active'}
                   </Text>
                 </View>
-                {!userData.is_trial_expired && (
+                {!userData.is_trial_expired && userData.trial_end && (
                   <View style={styles.profileDetail}>
                     <Text style={styles.detailLabel}>Trial Ends</Text>
                     <Text style={styles.detailValue}>
@@ -312,8 +351,27 @@ export default function SettingsScreen() {
             <ChevronRight size={20} color="#000000" />
           </TouchableOpacity>
         </View>
-        
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          
+          <TouchableOpacity 
+            style={styles.accountItem}
+            onPress={handleChangeEmail}
+          >
+            <View style={styles.accountItemContent}>
+              <View style={styles.iconContainer}>
+                <Mail size={20} color={BRAND_COLORS.brightBlue} />
+              </View>
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingText}>Change Email Address</Text>
+                <Text style={styles.settingDescription}>Update your account email</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color="#AAAAAA" />
+          </TouchableOpacity>
+        </View>
+        
         <View style={styles.dangerSection}>
           <View style={styles.dangerHeader}>
             <AlertTriangle size={20} color="#FF3B30" />
@@ -477,6 +535,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#000000',
     marginRight: 8,
+  },
+  accountItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  accountItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   dangerSection: {
     marginTop: 32,

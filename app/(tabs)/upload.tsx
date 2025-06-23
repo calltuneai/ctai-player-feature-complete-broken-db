@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Upload as UploadIcon, Plus, X } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -56,17 +56,10 @@ export default function UploadScreen() {
   const pickSound = async () => {
     try {
       if (Platform.OS === 'web') {
-        alert("File picking is not fully supported in the web preview. This would allow selecting audio files on a real device.");
-        
-        const mockFile = {
-          uri: 'https://example.com/sample-audio.mp3',
-          name: 'Sample Predator Call.mp3',
-          size: 1024 * 1024 * 2,
-          duration: 45,
-        };
-        
-        setSelectedFile(mockFile);
-        setSoundName('Sample Predator Call');
+        Alert.alert(
+          "File Upload Not Available", 
+          "File picking is not available in the web preview. This feature works on mobile devices where you can select audio files from your device storage."
+        );
         return;
       }
       
@@ -112,11 +105,7 @@ export default function UploadScreen() {
       }
     } catch (error) {
       console.error('Error picking document:', error);
-      if (Platform.OS === 'web') {
-        alert('Failed to select audio file.');
-      } else {
-        Alert.alert('Error', 'Failed to select audio file.');
-      }
+      Alert.alert('Error', 'Failed to select audio file.');
     }
   };
 
@@ -139,20 +128,12 @@ export default function UploadScreen() {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      if (Platform.OS === 'web') {
-        alert('Please select an audio file to upload.');
-      } else {
-        Alert.alert('Missing File', 'Please select an audio file to upload.');
-      }
+      Alert.alert('Missing File', 'Please select an audio file to upload.');
       return;
     }
     
     if (!soundName.trim()) {
-      if (Platform.OS === 'web') {
-        alert('Please provide a name for your sound.');
-      } else {
-        Alert.alert('Missing Name', 'Please provide a name for your sound.');
-      }
+      Alert.alert('Missing Name', 'Please provide a name for your sound.');
       return;
     }
     
@@ -178,37 +159,25 @@ export default function UploadScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
-      if (Platform.OS === 'web') {
-        if (confirm('Your sound has been added to the library. Go to Library or Upload Another?')) {
-          router.push('/');
-        } else {
-          resetForm();
-        }
-      } else {
-        Alert.alert(
-          'Upload Successful',
-          'Your sound has been added to the library.',
-          [
-            {
-              text: 'Go to Library',
-              onPress: () => router.push('/'),
+      Alert.alert(
+        'Upload Successful',
+        'Your sound has been added to the library.',
+        [
+          {
+            text: 'Go to Library',
+            onPress: () => router.push('/'),
+          },
+          {
+            text: 'Upload Another',
+            onPress: () => {
+              resetForm();
             },
-            {
-              text: 'Upload Another',
-              onPress: () => {
-                resetForm();
-              },
-            },
-          ]
-        );
-      }
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error uploading sound:', error);
-      if (Platform.OS === 'web') {
-        alert('There was an error adding your sound.');
-      } else {
-        Alert.alert('Upload Failed', 'There was an error adding your sound.');
-      }
+      Alert.alert('Upload Failed', 'There was an error adding your sound.');
     } finally {
       setIsUploading(false);
     }
@@ -230,6 +199,7 @@ export default function UploadScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Image 
@@ -243,12 +213,10 @@ export default function UploadScreen() {
           </View>
         </View>
       </View>
-      
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+
+      {/* Main Content */}
+      <View style={styles.content}>
+        {/* Upload Area */}
         <TouchableOpacity 
           style={styles.uploadArea} 
           onPress={pickSound}
@@ -278,10 +246,10 @@ export default function UploadScreen() {
             </>
           )}
         </TouchableOpacity>
-        
-        <View style={styles.formSection}>
-          <Text style={styles.sectionTitle}>Sound Details</Text>
-          
+
+        {/* Form Fields */}
+        <View style={styles.formContainer}>
+          {/* Name Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Name</Text>
             <TextInput
@@ -293,21 +261,8 @@ export default function UploadScreen() {
               maxLength={50}
             />
           </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Description</Text>
-            <TextInput
-              style={[styles.textInput, styles.textAreaInput]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Enter sound description"
-              placeholderTextColor="#AAAAAA"
-              multiline
-              numberOfLines={4}
-              maxLength={200}
-            />
-          </View>
-          
+
+          {/* Category Selection */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Category</Text>
             <View style={styles.categoryButtons}>
@@ -328,9 +283,10 @@ export default function UploadScreen() {
               ))}
             </View>
           </View>
-          
+
+          {/* Tags Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Tags</Text>
+            <Text style={styles.inputLabel}>Tags (Optional)</Text>
             <View style={styles.tagInputContainer}>
               <TextInput
                 style={styles.tagInput}
@@ -349,20 +305,23 @@ export default function UploadScreen() {
               </TouchableOpacity>
             </View>
             
-            <View style={styles.tagsContainer}>
-              {tags.map(tag => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                  <TouchableOpacity onPress={() => removeTag(tag)}>
-                    <X size={16} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
+            {tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {tags.map(tag => (
+                  <View key={tag} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                    <TouchableOpacity onPress={() => removeTag(tag)}>
+                      <X size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
-      </ScrollView>
-      
+      </View>
+
+      {/* Footer Button */}
       <View style={styles.footer}>
         <TouchableOpacity 
           style={[styles.uploadButton, (!selectedFile || !soundName.trim() || isUploading) && styles.disabledButton]}
@@ -384,8 +343,8 @@ const styles = StyleSheet.create({
     backgroundColor: BRAND_COLORS.deepBlue,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -395,8 +354,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 56,
-    height: 56,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     marginRight: 16,
   },
@@ -414,16 +373,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: BRAND_COLORS.brightBlue,
   },
-  scrollView: {
+  content: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
   },
   uploadArea: {
-    backgroundColor: BRAND_COLORS.deepBlue,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: 'rgba(4, 150, 255, 0.3)',
     borderStyle: 'dashed',
@@ -431,21 +388,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
+    minHeight: 120,
   },
   uploadIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: 'rgba(4, 150, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   uploadText: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   uploadSubtext: {
     fontSize: 14,
@@ -466,13 +424,13 @@ const styles = StyleSheet.create({
   fileInfoRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
+    gap: 16,
   },
   fileInfoText: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
-    marginHorizontal: 8,
   },
   changeFileButton: {
     paddingVertical: 8,
@@ -485,50 +443,44 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     color: BRAND_COLORS.brightBlue,
   },
-  formSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Orbitron-Bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
+  formContainer: {
+    flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: BRAND_COLORS.deepBlue,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
     color: '#FFFFFF',
     fontFamily: 'Inter-Regular',
     fontSize: 16,
-  },
-  textAreaInput: {
-    minHeight: 100,
-    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   categoryButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   categoryButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: BRAND_COLORS.deepBlue,
-    marginRight: 8,
-    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   selectedCategoryButton: {
     backgroundColor: BRAND_COLORS.brightBlue,
+    borderColor: BRAND_COLORS.brightBlue,
   },
   categoryButtonText: {
     color: '#AAAAAA',
@@ -541,22 +493,24 @@ const styles = StyleSheet.create({
   tagInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   tagInput: {
     flex: 1,
-    backgroundColor: BRAND_COLORS.deepBlue,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
     color: '#FFFFFF',
     fontFamily: 'Inter-Regular',
     fontSize: 16,
-    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   addTagButton: {
     backgroundColor: BRAND_COLORS.brightBlue,
-    width: 44,
-    height: 44,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -564,6 +518,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginTop: 12,
+    gap: 8,
   },
   tag: {
     flexDirection: 'row',
@@ -572,28 +527,33 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    marginRight: 8,
-    marginBottom: 8,
+    gap: 6,
   },
   tagText: {
     color: '#FFFFFF',
     fontFamily: 'Inter-Medium',
     fontSize: 14,
-    marginRight: 6,
   },
   footer: {
-    padding: 16,
+    padding: 20,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   uploadButton: {
     backgroundColor: BRAND_COLORS.brightBlue,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
+    shadowColor: BRAND_COLORS.brightBlue,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   disabledButton: {
     backgroundColor: 'rgba(4, 150, 255, 0.5)',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   uploadButtonText: {
     color: '#FFFFFF',
