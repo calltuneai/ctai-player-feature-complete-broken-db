@@ -50,6 +50,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const initialize = async () => {
       try {
+        // Set audio mode for all platforms
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           playsInSilentModeIOS: true,
@@ -84,7 +85,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       if (soundObject) {
-        soundObject.unloadAsync();
+        soundObject.unloadAsync().catch(console.warn);
       }
     };
   }, []);

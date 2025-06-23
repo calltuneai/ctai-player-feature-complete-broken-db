@@ -25,7 +25,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
     switch (type) {
       case 'library':
         return {
-          icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
+          icon: <Upload size={64} color={BRAND_COLORS.brightBlue} />,
           title: 'Your sound library is empty',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
@@ -49,7 +49,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
         };
       default:
         return {
-          icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
+          icon: <Upload size={64} color={BRAND_COLORS.brightBlue} />,
           title: 'No sounds available',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
