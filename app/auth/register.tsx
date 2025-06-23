@@ -9,8 +9,6 @@ import {
   Platform,
   Image,
   KeyboardAvoidingView,
-  Linking,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
@@ -46,57 +44,6 @@ export default function RegisterScreen() {
 
   const validatePassword = (password: string) => {
     return password.length >= 6;
-  };
-
-  const handleOpenEmail = async () => {
-    if (Platform.OS === 'web') {
-      // For web, try to open domain-specific email clients
-      const emailDomain = email.toLowerCase().split('@')[1];
-      let emailUrl = '';
-      
-      if (emailDomain?.includes('gmail.com')) {
-        emailUrl = 'https://mail.google.com';
-      } else if (emailDomain?.includes('outlook.com') || emailDomain?.includes('hotmail.com') || emailDomain?.includes('live.com')) {
-        emailUrl = 'https://outlook.live.com';
-      } else if (emailDomain?.includes('yahoo.com')) {
-        emailUrl = 'https://mail.yahoo.com';
-      } else if (emailDomain?.includes('icloud.com')) {
-        emailUrl = 'https://www.icloud.com/mail';
-      } else {
-        // For other domains, try to use the system's default email handler
-        try {
-          window.location.href = 'mailto:';
-          return;
-        } catch (err) {
-          // If mailto fails, open Gmail as fallback
-          emailUrl = 'https://mail.google.com';
-        }
-      }
-      
-      if (emailUrl) {
-        window.open(emailUrl, '_blank');
-      }
-      return;
-    }
-  
-    // For mobile, try to open the default email app
-    try {
-      const supported = await Linking.canOpenURL('mailto:');
-      if (supported) {
-        await Linking.openURL('mailto:');
-      } else {
-        Alert.alert(
-          'Email App Not Found',
-          'Please check your email manually or install an email app.'
-        );
-      }
-    } catch (err) {
-      console.error('Failed to open email app:', err);
-      Alert.alert(
-        'Error',
-        'Could not open email app. Please check your email manually.'
-      );
-    }
   };
 
   const handleRegister = async () => {
@@ -205,15 +152,8 @@ export default function RegisterScreen() {
             <View style={styles.successTextContainer}>
               <Text style={styles.successTitle}>Account Created Successfully!</Text>
               <Text style={styles.successText}>
-                Please check your email to verify your account before signing in.
+                Please check your email to verify your account before signing in. Look for an email from Supabase Auth and click the verification link.
               </Text>
-              <TouchableOpacity
-                style={styles.checkEmailButton}
-                onPress={handleOpenEmail}
-              >
-                <Mail size={20} color="#FFFFFF" />
-                <Text style={styles.checkEmailText}>Open Email App</Text>
-              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -422,22 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#FFFFFF',
-    marginBottom: 12,
-  },
-  checkEmailButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4CD964',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-  },
-  checkEmailText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    marginLeft: 8,
+    lineHeight: 20,
   },
   form: {
     width: '100%',
