@@ -21,16 +21,19 @@ export default function TabLayout() {
   let volumeListener: any = null;
 
   useEffect(() => {
-    // Get initial volume
-    SystemSetting.getVolume().then((vol) => {
-      console.log(vol,"s")
-      setVolume(vol);
-    });
+    // Only use volume controls on native platforms
+    if (Platform.OS !== 'web') {
+      // Get initial volume
+      SystemSetting.getVolume().then((vol) => {
+        console.log(vol, "s");
+        setVolume(vol);
+      });
 
-    // Set up volume listener
-    volumeListener = SystemSetting.addVolumeListener((data) => {
-      setVolume(data.value);
-    });
+      // Set up volume listener
+      volumeListener = SystemSetting.addVolumeListener((data) => {
+        setVolume(data.value);
+      });
+    }
 
     // Check authentication
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,7 +44,7 @@ export default function TabLayout() {
 
     // Clean up listener
     return () => {
-      if (volumeListener) {
+      if (volumeListener && Platform.OS !== 'web') {
         SystemSetting.removeVolumeListener(volumeListener);
       }
     };
@@ -50,32 +53,38 @@ export default function TabLayout() {
   const handleVolumeChange = (value: number) => {
     console.log('Volume changed:', value);
     setVolume(value);
-    SystemSetting.setVolume(value, {
-      playSound: true, // Set to true if you want to play sound when changing volume
-      showUI: true,   // Set to true to show native volume UI
-    });
+    
+    // Only set system volume on native platforms
+    if (Platform.OS !== 'web') {
+      SystemSetting.setVolume(value, {
+        playSound: true, // Set to true if you want to play sound when changing volume
+        showUI: true,   // Set to true to show native volume UI
+      });
+    }
   };
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Volume Control */}
-      <View style={styles.sliderWrapper}>
-        <BlurView intensity={60} tint="dark" style={styles.sliderBackground}>
-          <Text style={styles.sliderLabel}>Volume</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={1}
-            value={volume}
-            step={0.01}
-            minimumTrackTintColor={BRAND_COLORS.brightBlue}
-            maximumTrackTintColor="#888"
-            thumbTintColor={BRAND_COLORS.brightBlue}
-            onValueChange={handleVolumeChange}
-          />
-          <Text style={styles.volumeValue}>{`${Math.round(volume * 100)}%`}</Text>
-        </BlurView>
-      </View>
+      {/* Volume Control - Only show on native platforms */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.sliderWrapper}>
+          <BlurView intensity={60} tint="dark" style={styles.sliderBackground}>
+            <Text style={styles.sliderLabel}>Volume</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={1}
+              value={volume}
+              step={0.01}
+              minimumTrackTintColor={BRAND_COLORS.brightBlue}
+              maximumTrackTintColor="#888"
+              thumbTintColor={BRAND_COLORS.brightBlue}
+              onValueChange={handleVolumeChange}
+            />
+            <Text style={styles.volumeValue}>{`${Math.round(volume * 100)}%`}</Text>
+          </BlurView>
+        </View>
+      )}
 
       {/* Tabs */}
       <Tabs
