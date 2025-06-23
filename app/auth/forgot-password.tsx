@@ -32,11 +32,14 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://calltuneai.com/auth/reset-password',
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
+        redirectTo: `${window.location.origin}/auth/reset`,
       });
 
-      if (error) throw error;
+      if (error) {
+        setError(error.message);
+        return;
+      }
 
       setResetSent(true);
     } catch (err: any) {
@@ -46,20 +49,20 @@ export default function ForgotPasswordScreen() {
     }
   };
 
-   const handleOpenEmail = async () => {
-      if (Platform.OS === 'web') {
-        window.open('https://mail.google.com', '_blank');
-        return;
-      }
+  const handleOpenEmail = async () => {
+    if (Platform.OS === 'web') {
+      window.open('https://mail.google.com', '_blank');
+      return;
+    }
     
-      Linking.openURL('mailto:').catch(err => {
-        console.error('Failed to open email app:', err);
-        Alert.alert(
-          'Error',
-          'Could not open email app. Please check your email manually.'
-        );
-      });
-    };
+    Linking.openURL('mailto:').catch(err => {
+      console.error('Failed to open email app:', err);
+      Alert.alert(
+        'Error',
+        'Could not open email app. Please check your email manually.'
+      );
+    });
+  };
 
   return (
     <KeyboardAvoidingView

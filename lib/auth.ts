@@ -21,20 +21,39 @@ export async function storeAuthData(session: Session, isVerified: boolean) {
 }
 
 export async function getStoredAuthData(): Promise<StoredAuthData | null> {
-  const data = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
-  return data ? JSON.parse(data) : null;
+  try {
+    const data = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error('Error getting stored auth data:', error);
+    return null;
+  }
 }
 
 export async function clearAuthData() {
-  await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+  try {
+    await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+  }
 }
 
 export async function checkAuth() {
   try {
-    // First check local storage
+    // First check local storage for offline capability
     const storedAuth = await getStoredAuthData();
     
     if (storedAuth?.isVerified) {
+      // Try to refresh the session if we have stored auth
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (session && !error) {
+        // Update stored auth with fresh session
+        await storeAuthData(session, true);
+        return { isAuthenticated: true, session };
+      }
+      
+      // If online refresh fails but we have verified stored auth, use it for offline mode
       return { isAuthenticated: true, session: storedAuth.session };
     }
 
@@ -42,13 +61,14 @@ export async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
-      const { data: userData } = await supabase
+      // Check if user exists in our users table and is verified
+      const { data: userData, error } = await supabase
         .from('users')
         .select('is_verified')
         .eq('id', session.user.id)
         .single();
 
-      if (userData?.is_verified) {
+      if (!error && userData?.is_verified) {
         // Store verification status locally for offline access
         await storeAuthData(session, true);
         return { isAuthenticated: true, session };
@@ -64,5 +84,16 @@ export async function checkAuth() {
       isAuthenticated: !!storedAuth?.isVerified,
       session: storedAuth?.session || null
     };
+  }
+}
+
+export async function signOut() {
+  try {
+    await supabase.auth.signOut();
+    await clearAuthData();
+  } catch (error) {
+    console.error('Sign out error:', error);
+    // Clear local data even if remote sign out fails
+    await clearAuthData();
   }
 }

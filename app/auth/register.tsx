@@ -28,7 +28,6 @@ export default function RegisterScreen() {
   const router = useRouter();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [isDevelopment] = useState(__DEV__);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -37,8 +36,6 @@ export default function RegisterScreen() {
   const [showPasswordHints, setShowPasswordHints] = useState(false);
   const [registrationStep, setRegistrationStep] = useState<'validating' | 'creating' | 'complete'>('validating');
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [rateLimitTimeout, setRateLimitTimeout] = useState<number | null>(null);
-  const [rateLimitRemaining, setRateLimitRemaining] = useState(5);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const validateEmail = (email: string) => {
@@ -65,16 +62,9 @@ export default function RegisterScreen() {
       );
     });
   };
+
   const handleRegister = async () => {
     try {
-      if (!isDevelopment) {
-        if (rateLimitTimeout && Date.now() < rateLimitTimeout) {
-          const waitMinutes = Math.ceil((rateLimitTimeout - Date.now()) / 60000);
-          setError(`Please wait ${waitMinutes} minute${waitMinutes > 1 ? 's' : ''} before trying again.`);
-          return;
-        }
-      }
-
       if (isSubmitted) {
         setError('Registration already submitted. Please check your email for verification or try signing in.');
         router.replace('/auth/login');
@@ -106,26 +96,23 @@ export default function RegisterScreen() {
       setRegistrationStep('creating');
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase(),
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName
-          },
-          emailRedirectTo: 'https://calltuneai.com/auth/verify'
+            first_name: firstName.trim(),
+            last_name: lastName.trim()
+          }
         }
       });
 
       if (authError) {
-        if (authError.message.includes('sending confirmation email')) {
-          setError('Unable to send verification email. Please try again later or contact support.');
-        } else if (authError.message.includes('User already registered')) {
+        if (authError.message.includes('User already registered')) {
           setError('This email is already registered. Please sign in instead.');
         } else if (authError.message.includes('Password should be')) {
           setError('Password must be at least 6 characters long');
         } else {
-          throw authError;
+          setError(authError.message);
         }
         return;
       }
@@ -138,32 +125,7 @@ export default function RegisterScreen() {
       }
     } catch (err: any) {
       console.error('Registration error:', err);
-      let errorMessage = 'An error occurred during registration';
-      
-      if (err.message?.includes('User already registered')) {
-        errorMessage = 'This email is already registered. Please sign in instead.';
-      } else if (err.message?.includes('Password should be')) {
-        errorMessage = 'Password must be at least 6 characters long';
-      } else if (err.message?.includes('hour.error.email.rate')) {
-        if (!isDevelopment) {
-          const timeout = Date.now() + 30 * 60 * 1000;
-          setRateLimitTimeout(timeout);
-          const waitMinutes = Math.ceil((timeout - Date.now()) / 60000);
-          errorMessage = `Rate limit reached. Please wait ${waitMinutes} minutes before trying again, or sign in with an existing account.`;
-          setEmail('');
-          setPassword('');
-        } else {
-          setRateLimitRemaining(prev => Math.max(0, prev - 1));
-          errorMessage = `Rate limit hit (${rateLimitRemaining} attempts remaining). In development mode, you can:\n\n` +
-            '• Use different email addresses\n' +
-            '• Wait a few minutes between attempts\n' +
-            '• Sign in with an existing account';
-        }
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      setError(err.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
     }
@@ -203,7 +165,7 @@ export default function RegisterScreen() {
             <View style={styles.successTextContainer}>
               <Text style={styles.successTitle}>Account Created Successfully!</Text>
               <Text style={styles.successText}>
-                Please check your email to verify your account.
+                Please check your email to verify your account before signing in.
               </Text>
               <TouchableOpacity
                 style={styles.checkEmailButton}
@@ -493,13 +455,6 @@ const styles = StyleSheet.create({
     color: '#0496FF',
     fontSize: 16,
     fontFamily: 'Inter-Medium'
-  },
-  inputHelper: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    marginTop: 4,
-    paddingHorizontal: 4
   },
   passwordHints: {
     marginTop: 8,

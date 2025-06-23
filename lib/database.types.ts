@@ -19,6 +19,8 @@ export interface Database {
           trial_start: string | null
           trial_end: string | null
           is_trial_expired: boolean | null
+          is_verified: boolean | null
+          last_verified_at: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -31,6 +33,8 @@ export interface Database {
           trial_start?: string | null
           trial_end?: string | null
           is_trial_expired?: boolean | null
+          is_verified?: boolean | null
+          last_verified_at?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -43,6 +47,37 @@ export interface Database {
           trial_start?: string | null
           trial_end?: string | null
           is_trial_expired?: boolean | null
+          is_verified?: boolean | null
+          last_verified_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          high_quality_enabled: boolean | null
+          bluetooth_auto_connect: boolean | null
+          keep_screen_on: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          high_quality_enabled?: boolean | null
+          bluetooth_auto_connect?: boolean | null
+          keep_screen_on?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          high_quality_enabled?: boolean | null
+          bluetooth_auto_connect?: boolean | null
+          keep_screen_on?: boolean | null
           created_at?: string | null
           updated_at?: string | null
         }
