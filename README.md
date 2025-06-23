@@ -34,7 +34,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 ### 2. Supabase Setup
 
 1. Create a new Supabase project
-2. Run the migration file: `supabase/migrations/001_initial_schema.sql`
+2. Run the migration file: `supabase/migrations/20250623151503_gentle_oasis.sql`
 3. Configure email templates in Supabase Auth settings
 4. Update the environment variables with your Supabase credentials
 

@@ -40,7 +40,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
 1. In Supabase Dashboard, go to **SQL Editor**
 2. Click **New Query**
-3. Copy and paste the entire contents of `supabase/migrations/001_initial_schema.sql`
+3. Copy and paste the entire contents of `supabase/migrations/20250623151503_gentle_oasis.sql`
 4. Click **Run** to execute the migration
 5. Verify tables were created in **Table Editor**
 
