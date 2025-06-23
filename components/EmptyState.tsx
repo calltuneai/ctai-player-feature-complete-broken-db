@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Volume2, Upload } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
@@ -10,6 +10,9 @@ const BRAND_COLORS = {
   brightBlue: '#00A6FF',
   lightGray: '#D3D3D3',
 };
+
+// CallTuneAI logo URL
+const LOGO_URL = 'https://calltuneai.com/calltuneai-predator-hunting-audio-logo.png';
 
 interface EmptyStateProps {
   type: 'library' | 'favorites' | 'search';
@@ -22,7 +25,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
     switch (type) {
       case 'library':
         return {
-          icon: <Upload size={64} color={BRAND_COLORS.brightBlue} />,
+          icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
           title: 'Your sound library is empty',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
@@ -46,7 +49,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
         };
       default:
         return {
-          icon: <Upload size={64} color={BRAND_COLORS.brightBlue} />,
+          icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
           title: 'No sounds available',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
@@ -87,6 +90,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   title: {
     fontSize: 20,

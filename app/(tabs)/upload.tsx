@@ -59,7 +59,7 @@ export default function UploadScreen() {
         alert("File picking is not fully supported in the web preview. This would allow selecting audio files on a real device.");
         
         const mockFile = {
-          uri: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+          uri: 'https://example.com/sample-audio.mp3',
           name: 'Sample Predator Call.mp3',
           size: 1024 * 1024 * 2,
           duration: 45,

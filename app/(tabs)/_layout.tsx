@@ -1,11 +1,10 @@
 import { Tabs } from 'expo-router';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform, View, StyleSheet, Text } from 'react-native';
 import { Play, Upload, Settings, Info } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import SoundPlayer from '../../components/SoundPlayer';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -16,6 +15,7 @@ const BRAND_COLORS = {
 
 export default function TabLayout() {
   const router = useRouter();
+  const [volume, setVolume] = useState(0.5);
 
   useEffect(() => {
     // Check authentication
@@ -25,6 +25,11 @@ export default function TabLayout() {
       }
     });
   }, []);
+
+  const handleVolumeChange = (value: number) => {
+    console.log('Volume changed:', value);
+    setVolume(value);
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -85,9 +90,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      
-      {/* Sound Player - appears above tab bar when playing */}
-      <SoundPlayer />
     </View>
   );
 }

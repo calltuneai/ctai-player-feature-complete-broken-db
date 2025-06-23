@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Play, Pause, SkipBack, SkipForward, Repeat, Volume2 } from 'lucide-react-native';
-import Slider from '@react-native-community/slider';
+import { Play, Pause, SkipBack, SkipForward, Repeat } from 'lucide-react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSounds } from '../context/SoundContext';
 import { BlurView } from 'expo-blur';
@@ -22,12 +21,10 @@ const SoundPlayer: React.FC = () => {
     isLooping,
     playbackPosition, 
     playbackDuration,
-    volume,
     playSound, 
     pauseSound, 
     seekSound,
-    toggleLooping,
-    setVolume
+    toggleLooping
   } = useSounds();
 
   if (!currentSound) return null;
@@ -47,13 +44,11 @@ const SoundPlayer: React.FC = () => {
     };
   });
 
-  const handleSeek = (value: number) => {
-    const position = value * playbackDuration;
+  const handleSeek = (event: any) => {
+    const { locationX } = event.nativeEvent;
+    const { width } = event.nativeEvent.layout;
+    const position = (locationX / width) * playbackDuration;
     seekSound(position);
-  };
-
-  const handleVolumeChange = (value: number) => {
-    setVolume(value);
   };
 
   const Container = Platform.OS === 'ios' ? BlurView : View;
@@ -70,16 +65,13 @@ const SoundPlayer: React.FC = () => {
       
       <View style={styles.progressContainer}>
         <Text style={styles.time}>{formatTime(playbackPosition)}</Text>
-        <Slider
-          style={styles.progressSlider}
-          minimumValue={0}
-          maximumValue={1}
-          value={progress}
-          onValueChange={handleSeek}
-          minimumTrackTintColor={BRAND_COLORS.brightBlue}
-          maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
-          thumbStyle={styles.sliderThumb}
-        />
+        <TouchableOpacity 
+          style={styles.progressBar} 
+          activeOpacity={0.7}
+          onPress={handleSeek}
+        >
+          <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
+        </TouchableOpacity>
         <Text style={styles.time}>{formatTime(playbackDuration)}</Text>
       </View>
       
@@ -109,22 +101,6 @@ const SoundPlayer: React.FC = () => {
         >
           <Repeat size={24} color={isLooping ? BRAND_COLORS.brightBlue : "#FFFFFF"} />
         </TouchableOpacity>
-      </View>
-
-      {/* Volume Control */}
-      <View style={styles.volumeContainer}>
-        <Volume2 size={16} color="#FFFFFF" />
-        <Slider
-          style={styles.volumeSlider}
-          minimumValue={0}
-          maximumValue={1}
-          value={volume}
-          onValueChange={handleVolumeChange}
-          minimumTrackTintColor={BRAND_COLORS.brightBlue}
-          maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
-          thumbStyle={styles.volumeThumb}
-        />
-        <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
       </View>
     </Container>
   );
@@ -164,15 +140,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  progressSlider: {
+  progressBar: {
     flex: 1,
-    height: 40,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
     marginHorizontal: 8,
+    overflow: 'hidden',
   },
-  sliderThumb: {
-    backgroundColor: BRAND_COLORS.brightBlue,
-    width: 16,
-    height: 16,
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   time: {
     color: '#AAAAAA',
@@ -184,7 +162,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
   controlButton: {
     padding: 12,
@@ -201,28 +178,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 16,
-  },
-  volumeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  volumeSlider: {
-    flex: 1,
-    height: 30,
-    marginHorizontal: 12,
-  },
-  volumeThumb: {
-    backgroundColor: BRAND_COLORS.brightBlue,
-    width: 12,
-    height: 12,
-  },
-  volumeText: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    width: 35,
-    textAlign: 'right',
   },
 });
 
