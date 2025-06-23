@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Slot, SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { SoundProvider } from '../context/SoundContext';
@@ -32,18 +32,18 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
 SplashScreen.preventAutoHideAsync();
 
+type AppState = 'loading' | 'update-required' | 'ready';
+
 export default function RootLayout() {
   useFrameworkReady();
-  const [appIsReady, setAppIsReady] = useState(false);
-  const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
+  
+  const [appState, setAppState] = useState<AppState>('loading');
+  const [updateMessage, setUpdateMessage] = useState('');
   const [authState, setAuthState] = useState<{
     isAuthenticated: boolean;
     isOffline?: boolean;
   }>({ isAuthenticated: false });
-  const [updateRequired, setUpdateRequired] = useState<{
-    required: boolean;
-    message: string;
-  }>({ required: false, message: '' });
+  
   const router = useRouter();
   const segments = useSegments();
 
@@ -63,113 +63,95 @@ export default function RootLayout() {
     'RobotoSlab-Bold': RobotoSlab_700Bold,
   });
 
-  // Check for app updates (kill switch)
-  const checkForUpdates = useCallback(async () => {
-    try {
-      const config = await checkAppConfig();
-      const currentVersion = getCurrentAppVersion();
-      
-      if (config.mustUpdate || isVersionOutdated(currentVersion, config.minVersion)) {
-        setUpdateRequired({
-          required: true,
-          message: config.message
-        });
-        return true; // Update required, block further initialization
-      }
-      
-      return false; // No update required
-    } catch (error) {
-      console.error('Error checking for updates:', error);
-      // Fail open - if we can't check for updates, allow app to continue
-      return false;
-    }
-  }, []);
-
-  const handleAuthRouting = useCallback(async () => {
-    try {
-      const authResult = await checkAuth();
-      const currentRoute = segments[0] || '';
-
-      if (__DEV__) {
-        console.log('Auth status:', authResult.isAuthenticated, 'Current route:', currentRoute);
-        if (authResult.isOffline) console.log('Running in offline mode');
-      }
-
-      setAuthState({
-        isAuthenticated: authResult.isAuthenticated,
-        isOffline: authResult.isOffline
-      });
-
-      if (!authResult.isAuthenticated && currentRoute !== 'auth') {
-        if (__DEV__) console.log('Redirecting to register');
-        router.replace('/auth/register');
-      } else if (authResult.isAuthenticated && currentRoute === 'auth') {
-        if (__DEV__) console.log('Redirecting to tabs');
-        router.replace('/(tabs)');
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      router.replace('/auth/register');
-    } finally {
-      setInitialAuthCheckDone(true);
-    }
-  }, [segments, router]);
-
-  // Initialize app with update check first
+  // Single initialization effect
   useEffect(() => {
     const initializeApp = async () => {
-      if (!(fontsLoaded || fontError)) return;
-
-      // First check for updates (kill switch)
-      const updateRequired = await checkForUpdates();
-      
-      if (updateRequired) {
-        // If update is required, stop here and show update modal
-        setAppIsReady(true);
-        SplashScreen.hideAsync().catch(console.warn);
+      // Wait for fonts to load
+      if (!fontsLoaded && !fontError) {
         return;
       }
 
-      // If no update required, proceed with auth check
-      if (!initialAuthCheckDone) {
-        await handleAuthRouting();
+      try {
+        // Step 1: Check for app updates (kill switch)
+        const config = await checkAppConfig();
+        const currentVersion = getCurrentAppVersion();
+        
+        if (config.mustUpdate || isVersionOutdated(currentVersion, config.minVersion)) {
+          setUpdateMessage(config.message);
+          setAppState('update-required');
+          await SplashScreen.hideAsync();
+          return;
+        }
+
+        // Step 2: Handle authentication and routing
+        const authResult = await checkAuth();
+        const currentRoute = segments[0] || '';
+
+        if (__DEV__) {
+          console.log('Auth status:', authResult.isAuthenticated, 'Current route:', currentRoute);
+          if (authResult.isOffline) console.log('Running in offline mode');
+        }
+
+        setAuthState({
+          isAuthenticated: authResult.isAuthenticated,
+          isOffline: authResult.isOffline
+        });
+
+        // Route based on auth state
+        if (!authResult.isAuthenticated && currentRoute !== 'auth') {
+          if (__DEV__) console.log('Redirecting to register');
+          router.replace('/auth/register');
+        } else if (authResult.isAuthenticated && currentRoute === 'auth') {
+          if (__DEV__) console.log('Redirecting to tabs');
+          router.replace('/(tabs)');
+        }
+
+        // Step 3: App is ready
+        setAppState('ready');
+        await SplashScreen.hideAsync();
+
+      } catch (error) {
+        console.error('App initialization error:', error);
+        // Fallback to auth screen on error
+        router.replace('/auth/register');
+        setAppState('ready');
+        await SplashScreen.hideAsync();
       }
     };
 
     initializeApp();
-  }, [fontsLoaded, fontError, initialAuthCheckDone, checkForUpdates, handleAuthRouting]);
+  }, [fontsLoaded, fontError, segments, router]);
 
-  useEffect(() => {
-    if (initialAuthCheckDone && (fontsLoaded || fontError) && !updateRequired.required) {
-      const timer = setTimeout(() => {
-        setAppIsReady(true);
-        SplashScreen.hideAsync().catch(console.warn);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [initialAuthCheckDone, fontsLoaded, fontError, updateRequired.required]);
-
+  // Handle font loading errors
   useEffect(() => {
     if (fontError) {
       console.error('Font loading error:', fontError);
     }
   }, [fontError]);
 
+  // Debug close handler for update modal
+  const handleDebugClose = useCallback(() => {
+    if (__DEV__) {
+      setAppState('ready');
+    }
+  }, []);
+
   // Show update modal if required
-  if (updateRequired.required) {
+  if (appState === 'update-required') {
     return (
       <SoundProvider>
         <UpdateRequiredModal
           visible={true}
-          message={updateRequired.message}
-          onClose={__DEV__ ? () => setUpdateRequired({ required: false, message: '' }) : undefined}
+          message={updateMessage}
+          onClose={__DEV__ ? handleDebugClose : undefined}
         />
         <StatusBar style="light" />
       </SoundProvider>
     );
   }
 
-  if (!appIsReady) {
+  // Show loading state (splash screen is still visible)
+  if (appState === 'loading') {
     return (
       <SoundProvider>
         <Slot />
@@ -177,6 +159,7 @@ export default function RootLayout() {
     );
   }
 
+  // App is ready - show main content
   return (
     <SoundProvider>
       <View style={styles.container}>
@@ -196,10 +179,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1A2C3E',
-  },
-  center: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   offlineIndicator: {
     position: 'absolute',
