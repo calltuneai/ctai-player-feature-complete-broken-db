@@ -7,7 +7,6 @@ import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import { useSounds } from '../../context/SoundContext';
 import { Sound, SoundCategory } from '../../types/sound';
-import * as Haptics from 'expo-haptics';
 import { useRouter, useFocusEffect } from 'expo-router';
 
 const BRAND_COLORS = {
@@ -56,23 +55,21 @@ export default function UploadScreen() {
   const pickSound = async () => {
     try {
       if (Platform.OS === 'web') {
-        // Suppress error in web preview - just show a helpful message
-        if (Platform.OS === 'web') {
-          Alert.alert(
-            "File Upload Not Available",
-            "File picking is not available in the web preview. On a real device, this would allow you to select audio files from your device.\n\nTip: Check out the sample sound already in your Library to test playback!",
-            [
-              {
-                text: "Go to Library",
-                onPress: () => router.push('/')
-              },
-              {
-                text: "OK",
-                style: "cancel"
-              }
-            ]
-          );
-        }
+        // Show helpful message for web preview
+        Alert.alert(
+          "File Upload Not Available",
+          "File picking is not available in the web preview. On a real device, this would allow you to select audio files from your device.\n\nTip: Check out the sample sound already in your Library to test playback!",
+          [
+            {
+              text: "Go to Library",
+              onPress: () => router.push('/(tabs)/')
+            },
+            {
+              text: "OK",
+              style: "cancel"
+            }
+          ]
+        );
         return;
       }
       
@@ -113,9 +110,6 @@ export default function UploadScreen() {
         duration: duration,
       });
       
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
     } catch (error) {
       console.error('Error picking document:', error);
       if (Platform.OS !== 'web') {
@@ -128,17 +122,11 @@ export default function UploadScreen() {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       setTags([...tags, currentTag.trim()]);
       setCurrentTag('');
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
     }
   };
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   };
 
   const handleUpload = async () => {
@@ -179,13 +167,9 @@ export default function UploadScreen() {
       
       await addSound(newSound);
       
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
       if (Platform.OS === 'web') {
         if (confirm('Your sound has been added to the library. Go to Library or Upload Another?')) {
-          router.push('/');
+          router.push('/(tabs)/');
         } else {
           resetForm();
         }
@@ -196,7 +180,7 @@ export default function UploadScreen() {
           [
             {
               text: 'Go to Library',
-              onPress: () => router.push('/'),
+              onPress: () => router.push('/(tabs)/'),
             },
             {
               text: 'Upload Another',

@@ -35,20 +35,20 @@ const getDataFilePath = () => {
   return Platform.OS === 'web' ? '' : `${FileSystem.documentDirectory}sounds.json`;
 };
 
-// Sample predator call data - using a web-compatible placeholder for web preview
+// Sample predator call data using the actual uploaded file
 const createSampleSound = (): Sound => ({
   id: 'sample-predator-call-001',
-  name: 'Sample Predator Call',
-  description: 'A high-quality sample predator distress call to test your setup and demonstrate CallTuneAI capabilities.',
-  duration: 30,
+  name: 'Sample Rabbit Distress Call',
+  description: 'A high-quality sample rabbit distress call to test your setup and demonstrate CallTuneAI capabilities.',
+  duration: 45, // Approximate duration - will be updated when loaded
   uri: Platform.OS === 'web' 
-    ? 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav' // Web fallback
-    : require('../assets/audio/sample-predator-call.mp3'),
-  size: 1024 * 512, // 512KB
+    ? '/assets/audio/demo_rabbit_distress.wav' // Web path
+    : require('../assets/audio/demo_rabbit_distress.wav'),
+  size: 1024 * 1024, // 1MB approximate
   dateAdded: new Date().toISOString(),
   category: 'Distress',
   favorite: false,
-  tags: ['sample', 'demo', 'distress', 'predator'],
+  tags: ['sample', 'demo', 'distress', 'rabbit'],
   isSample: true
 });
 
@@ -62,6 +62,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [playbackDuration, setPlaybackDuration] = useState(0);
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [webPlaybackInterval, setWebPlaybackInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Initialize audio and load saved sounds
   useEffect(() => {
@@ -127,6 +128,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     initialize();
 
     return () => {
+      if (webPlaybackInterval) {
+        clearInterval(webPlaybackInterval);
+      }
       if (soundObject && Platform.OS !== 'web') {
         soundObject.unloadAsync().catch(console.warn);
       }
@@ -176,28 +180,37 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       // Web platform fallback
       if (Platform.OS === 'web') {
-        console.log('Audio playback not available in web preview');
-        console.log('Playing sample sound:', sound.name);
+        console.log('Audio playback simulated in web preview');
+        console.log('Playing:', sound.name);
+        
+        // Clear any existing interval
+        if (webPlaybackInterval) {
+          clearInterval(webPlaybackInterval);
+        }
+        
         setCurrentSound(sound);
         setIsPlaying(true);
         setPlaybackDuration(sound.duration);
+        setPlaybackPosition(0);
         
         // Simulate playback progress
-        let position = 0;
         const interval = setInterval(() => {
-          position += 0.5;
-          setPlaybackPosition(position);
-          if (position >= sound.duration) {
-            if (isLooping) {
-              position = 0;
-            } else {
-              setIsPlaying(false);
-              setPlaybackPosition(0);
-              clearInterval(interval);
+          setPlaybackPosition(prev => {
+            const newPosition = prev + 0.5;
+            if (newPosition >= sound.duration) {
+              if (isLooping) {
+                return 0;
+              } else {
+                setIsPlaying(false);
+                clearInterval(interval);
+                return 0;
+              }
             }
-          }
+            return newPosition;
+          });
         }, 500);
         
+        setWebPlaybackInterval(interval);
         return;
       }
 
@@ -208,7 +221,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       // For sample sound, show a message that it's a demo
       if (sound.isSample) {
-        console.log('Playing sample sound - this is a demo file');
+        console.log('Playing sample sound - demo file');
       }
 
       // Create and load new sound
@@ -216,7 +229,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         sound.isSample ? sound.uri : { uri: sound.uri },
         {
           shouldPlay: true,
-          isLooping: true,
+          isLooping: isLooping,
           volume: 1.0,
           shouldCorrectPitch: highQualityEnabled,
         },
@@ -250,7 +263,28 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const playSound = async () => {
     if (Platform.OS === 'web') {
-      setIsPlaying(true);
+      if (currentSound && !isPlaying) {
+        setIsPlaying(true);
+        
+        // Resume web playback simulation
+        const interval = setInterval(() => {
+          setPlaybackPosition(prev => {
+            const newPosition = prev + 0.5;
+            if (newPosition >= (currentSound?.duration || 0)) {
+              if (isLooping) {
+                return 0;
+              } else {
+                setIsPlaying(false);
+                clearInterval(interval);
+                return 0;
+              }
+            }
+            return newPosition;
+          });
+        }, 500);
+        
+        setWebPlaybackInterval(interval);
+      }
       return;
     }
     
@@ -266,6 +300,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const pauseSound = async () => {
     if (Platform.OS === 'web') {
       setIsPlaying(false);
+      if (webPlaybackInterval) {
+        clearInterval(webPlaybackInterval);
+        setWebPlaybackInterval(null);
+      }
       return;
     }
     
@@ -282,6 +320,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (Platform.OS === 'web') {
       setIsPlaying(false);
       setPlaybackPosition(0);
+      if (webPlaybackInterval) {
+        clearInterval(webPlaybackInterval);
+        setWebPlaybackInterval(null);
+      }
       return;
     }
     
@@ -372,6 +414,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       if (currentSound && currentSound.id === id) {
+        if (webPlaybackInterval) {
+          clearInterval(webPlaybackInterval);
+          setWebPlaybackInterval(null);
+        }
         if (soundObject && Platform.OS !== 'web') {
           await soundObject.unloadAsync();
           setSoundObject(null);
