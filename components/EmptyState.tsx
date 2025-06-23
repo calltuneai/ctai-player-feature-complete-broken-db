@@ -26,9 +26,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
       case 'library':
         return {
           icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
-          title: 'Your sound library is empty',
-          description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
-          buttonText: 'Upload Sounds',
+          title: 'Upload a sound to start',
+          description: 'Add your first predator calling sound to begin building your library.',
+          buttonText: 'Upload Sound',
           action: () => router.push('/upload')
         };
       case 'favorites':
@@ -50,9 +50,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
       default:
         return {
           icon: <Image source={{uri: LOGO_URL}} style={styles.logoImage} />,
-          title: 'No sounds available',
-          description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
-          buttonText: 'Upload Sounds',
+          title: 'Upload a sound to start',
+          description: 'Add your first predator calling sound to begin building your library.',
+          buttonText: 'Upload Sound',
           action: () => router.push('/upload')
         };
     }
