@@ -49,30 +49,35 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Initialize audio and load saved sounds
   useEffect(() => {
     const initialize = async () => {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-      });
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: false,
+        });
 
-      if (Platform.OS !== 'web') {
-        const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
-        if (!dirInfo.exists) {
-          await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
+        if (Platform.OS !== 'web') {
+          const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
+          if (!dirInfo.exists) {
+            await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
+          }
+
+          const fileInfo = await FileSystem.getInfoAsync(getDataFilePath());
+          if (fileInfo.exists) {
+            const data = await FileSystem.readAsStringAsync(getDataFilePath());
+            setSounds(JSON.parse(data));
+          }
+        } else {
+          const storedSounds = localStorage.getItem('sounds');
+          if (storedSounds) setSounds(JSON.parse(storedSounds));
         }
 
-        const fileInfo = await FileSystem.getInfoAsync(getDataFilePath());
-        if (fileInfo.exists) {
-          const data = await FileSystem.readAsStringAsync(getDataFilePath());
-          setSounds(JSON.parse(data));
-        }
-      } else {
-        const storedSounds = localStorage.getItem('sounds');
-        if (storedSounds) setSounds(JSON.parse(storedSounds));
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Error initializing audio:', error);
+        setIsInitialized(true);
       }
-
-      setIsInitialized(true);
     };
 
     initialize();
@@ -89,10 +94,14 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!isInitialized) return;
 
     const saveSounds = async () => {
-      if (Platform.OS !== 'web') {
-        await FileSystem.writeAsStringAsync(getDataFilePath(), JSON.stringify(sounds));
-      } else {
-        localStorage.setItem('sounds', JSON.stringify(sounds));
+      try {
+        if (Platform.OS !== 'web') {
+          await FileSystem.writeAsStringAsync(getDataFilePath(), JSON.stringify(sounds));
+        } else {
+          localStorage.setItem('sounds', JSON.stringify(sounds));
+        }
+      } catch (error) {
+        console.error('Error saving sounds:', error);
       }
     };
 
@@ -104,11 +113,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!soundObject) return;
 
     const interval = setInterval(async () => {
-      const status = await soundObject.getStatusAsync();
-      if (status.isLoaded) {
-        setPlaybackPosition(status.positionMillis / 1000);
-        setPlaybackDuration(status.durationMillis ? status.durationMillis / 1000 : 0);
-        setIsPlaying(status.isPlaying);
+      try {
+        const status = await soundObject.getStatusAsync();
+        if (status.isLoaded) {
+          setPlaybackPosition(status.positionMillis / 1000);
+          setPlaybackDuration(status.durationMillis ? status.durationMillis / 1000 : 0);
+          setIsPlaying(status.isPlaying);
+        }
+      } catch (error) {
+        console.error('Error getting playback status:', error);
       }
     }, 500);
 
@@ -171,7 +184,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const stopSound = async () => {
-    if (!soundObject || !isLoaded) return;
+    if (!soundObject) return;
     
     try {
       await soundObject.stopAsync();
@@ -184,7 +197,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const seekSound = async (position: number) => {
-    if (!soundObject || !isLoaded) return;
+    if (!soundObject) return;
     
     try {
       await soundObject.setPositionAsync(position * 1000);
@@ -195,7 +208,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleLooping = async () => {
-    if (!soundObject || !isLoaded) return;
+    if (!soundObject) return;
     
     try {
       const newLoopingState = !isLooping;
@@ -248,7 +261,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
         setCurrentSound(null);
         setIsPlaying(false);
-        setIsLoaded(false);
       }
 
       if (Platform.OS !== 'web') {
