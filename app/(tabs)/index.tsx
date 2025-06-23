@@ -46,7 +46,11 @@ export default function LibraryScreen() {
     setSelectedSound(sound);
     setOptionsModalVisible(true);
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        // Haptics not available, continue silently
+      }
     }
   };
 
@@ -84,7 +88,11 @@ export default function LibraryScreen() {
               deleteSound(selectedSound.id);
               setOptionsModalVisible(false);
               if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                try {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                } catch (error) {
+                  // Haptics not available, continue silently
+                }
               }
             },
             style: "destructive"
@@ -173,7 +181,7 @@ export default function LibraryScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.uploadButton} 
-            onPress={() => router.push('/upload')}
+            onPress={() => router.push('/(tabs)/upload')}
           >
             <Upload size={20} color="#FFFFFF" />
             <Text style={styles.uploadButtonText}>Upload Sounds</Text>

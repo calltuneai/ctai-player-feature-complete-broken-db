@@ -29,7 +29,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
           title: 'Your sound library is empty',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
-          action: () => router.push('/upload')
+          action: () => router.push('/(tabs)/upload')
         };
       case 'favorites':
         return {
@@ -37,7 +37,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
           title: 'No favorite sounds yet',
           description: 'Mark sounds as favorites to find them quickly.',
           buttonText: 'Browse Library',
-          action: () => router.push('/')
+          action: () => router.push('/(tabs)/')
         };
       case 'search':
         return {
@@ -53,7 +53,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
           title: 'No sounds available',
           description: 'Upload your CallTuneAI-generated predator calling sounds to get started.',
           buttonText: 'Upload Sounds',
-          action: () => router.push('/upload')
+          action: () => router.push('/(tabs)/upload')
         };
     }
   };
