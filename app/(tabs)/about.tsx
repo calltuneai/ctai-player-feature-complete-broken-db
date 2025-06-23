@@ -75,7 +75,8 @@ export default function AboutScreen() {
           <Text style={styles.sectionTitle}>About CallTuneAI</Text>
           <Text style={styles.paragraph}>
             CallTuneAI Player is a lightweight app designed to play predator calls — either 
-            uploaded by you or synced directly from your CallTuneAI Studio account (coming soon).
+            uploaded by you or synced directly from your CallTuneAI Studio account (coming soon).</Text>
+            <Text style={styles.paragraph}>
             CallTuneAI Studio revolutionizes predator hunting by leveraging cutting-edge AI technology 
             to create the most realistic and effective predator calls available. Our system 
             analyzes and replicates intricate vocalizations with unprecedented accuracy.
