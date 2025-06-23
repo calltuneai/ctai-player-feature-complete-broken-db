@@ -50,15 +50,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Set audio mode for all platforms
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: false,
-        });
-
+        // Set audio mode for native platforms only
         if (Platform.OS !== 'web') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            shouldDuckAndroid: false,
+          });
+
           const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
           if (!dirInfo.exists) {
             await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
