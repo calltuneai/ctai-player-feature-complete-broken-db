@@ -38,9 +38,11 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
 ## 4. Run Database Migration
 
+**IMPORTANT**: Use the clean migration to avoid conflicts:
+
 1. In Supabase Dashboard, go to **SQL Editor**
 2. Click **New Query**
-3. Copy and paste the entire contents of `supabase/migrations/20250623151503_gentle_oasis.sql`
+3. Copy and paste the entire contents of `supabase/migrations/20250623151503_gentle_oasis_clean.sql`
 4. Click **Run** to execute the migration
 5. Verify tables were created in **Table Editor**
 
@@ -92,7 +94,7 @@ For better user experience, customize email templates:
 
 - [ ] Supabase project created and initialized
 - [ ] Environment variables updated in `.env`
-- [ ] Database migration executed successfully
+- [ ] Clean migration executed successfully
 - [ ] Tables visible in Supabase Table Editor:
   - [ ] `users` table
   - [ ] `user_settings` table
@@ -108,6 +110,10 @@ For better user experience, customize email templates:
 - Ensure `.env` file exists in project root
 - Verify variable names match exactly: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 - Restart Expo development server after updating `.env`
+
+**"Policy already exists" error:**
+- Use the clean migration file: `20250623151503_gentle_oasis_clean.sql`
+- This file safely handles existing policies and objects
 
 **Database connection errors:**
 - Verify Supabase project is fully initialized

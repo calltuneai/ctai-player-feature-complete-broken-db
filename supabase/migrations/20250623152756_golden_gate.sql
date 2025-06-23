@@ -1,5 +1,44 @@
+/*
+  # CallTuneAI Player - Clean Database Setup
+  
+  This migration safely sets up the database schema, handling existing objects gracefully.
+  
+  1. New Tables
+    - `users` - User profiles with trial tracking and verification
+    - `user_settings` - User preferences and app settings
+  
+  2. Security
+    - Enable RLS on all tables
+    - Add policies for authenticated users to manage their own data
+  
+  3. Functions & Triggers
+    - Auto-update timestamps
+    - Trial status management
+    - User creation and verification sync
+*/
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Users can view own data" ON public.users;
+DROP POLICY IF EXISTS "Users can update own data" ON public.users;
+DROP POLICY IF EXISTS "Users can view own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Users can insert own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Users can update own settings" ON public.user_settings;
+
+-- Drop existing triggers to avoid conflicts
+DROP TRIGGER IF EXISTS update_trial_status ON public.users;
+DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
+DROP TRIGGER IF EXISTS update_user_settings_updated_at ON public.user_settings;
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+
+-- Drop existing functions to recreate them
+DROP FUNCTION IF EXISTS check_trial_status();
+DROP FUNCTION IF EXISTS update_updated_at_column();
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS sync_user_verification();
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS public.users (
@@ -113,7 +152,14 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'last_name', ''),
     NEW.email_confirmed_at IS NOT NULL,
     NEW.email_confirmed_at
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    is_verified = EXCLUDED.is_verified,
+    last_verified_at = EXCLUDED.last_verified_at,
+    updated_at = now();
 
   RETURN NEW;
 END;
