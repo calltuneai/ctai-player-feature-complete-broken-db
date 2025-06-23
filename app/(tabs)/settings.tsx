@@ -21,6 +21,9 @@ const BRAND_COLORS = {
 
 const LOGO_URL = 'https://calltuneai.com/calltuneai-predator-hunting-audio-logo.png';
 
+// Hide trial UI for now - can be toggled when ready to monetize
+const SHOW_TRIAL_INFO = false;
+
 export default function SettingsScreen() {
   const { sounds, deleteSound, highQualityEnabled, setHighQualityEnabled } = useSounds();
   const router = useRouter();
@@ -213,19 +216,25 @@ export default function SettingsScreen() {
                     {userData.is_verified ? 'Verified' : 'Pending Verification'}
                   </Text>
                 </View>
-                <View style={styles.profileDetail}>
-                  <Text style={styles.detailLabel}>Trial Status</Text>
-                  <Text style={[styles.detailValue, userData.is_trial_expired ? styles.expired : styles.active]}>
-                    {userData.is_trial_expired ? 'Expired' : 'Active'}
-                  </Text>
-                </View>
-                {!userData.is_trial_expired && userData.trial_end && (
-                  <View style={styles.profileDetail}>
-                    <Text style={styles.detailLabel}>Trial Ends</Text>
-                    <Text style={styles.detailValue}>
-                      {new Date(userData.trial_end).toLocaleDateString()}
-                    </Text>
-                  </View>
+                
+                {/* Only show trial info if SHOW_TRIAL_INFO is true */}
+                {SHOW_TRIAL_INFO && (
+                  <>
+                    <View style={styles.profileDetail}>
+                      <Text style={styles.detailLabel}>Trial Status</Text>
+                      <Text style={[styles.detailValue, userData.is_trial_expired ? styles.expired : styles.active]}>
+                        {userData.is_trial_expired ? 'Expired' : 'Active'}
+                      </Text>
+                    </View>
+                    {!userData.is_trial_expired && userData.trial_end && (
+                      <View style={styles.profileDetail}>
+                        <Text style={styles.detailLabel}>Trial Ends</Text>
+                        <Text style={styles.detailValue}>
+                          {new Date(userData.trial_end).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    )}
+                  </>
                 )}
               </View>
 

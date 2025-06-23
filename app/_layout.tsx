@@ -4,7 +4,9 @@ import { useFonts } from 'expo-font';
 import { Slot, SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { SoundProvider } from '../context/SoundContext';
 import { checkAuth } from '../lib/auth';
+import { checkAppConfig, getCurrentAppVersion, isVersionOutdated } from '../lib/app-config';
 import { StatusBar } from 'expo-status-bar';
+import UpdateRequiredModal from '../components/UpdateRequiredModal';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -38,6 +40,10 @@ export default function RootLayout() {
     isAuthenticated: boolean;
     isOffline?: boolean;
   }>({ isAuthenticated: false });
+  const [updateRequired, setUpdateRequired] = useState<{
+    required: boolean;
+    message: string;
+  }>({ required: false, message: '' });
   const router = useRouter();
   const segments = useSegments();
 
@@ -56,6 +62,28 @@ export default function RootLayout() {
     'RobotoSlab-Regular': RobotoSlab_400Regular,
     'RobotoSlab-Bold': RobotoSlab_700Bold,
   });
+
+  // Check for app updates (kill switch)
+  const checkForUpdates = useCallback(async () => {
+    try {
+      const config = await checkAppConfig();
+      const currentVersion = getCurrentAppVersion();
+      
+      if (config.mustUpdate || isVersionOutdated(currentVersion, config.minVersion)) {
+        setUpdateRequired({
+          required: true,
+          message: config.message
+        });
+        return true; // Update required, block further initialization
+      }
+      
+      return false; // No update required
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      // Fail open - if we can't check for updates, allow app to continue
+      return false;
+    }
+  }, []);
 
   const handleAuthRouting = useCallback(async () => {
     try {
@@ -87,27 +115,59 @@ export default function RootLayout() {
     }
   }, [segments, router]);
 
+  // Initialize app with update check first
   useEffect(() => {
-    if ((fontsLoaded || fontError) && !initialAuthCheckDone) {
-      handleAuthRouting();
-    }
-  }, [fontsLoaded, fontError, initialAuthCheckDone, handleAuthRouting]);
+    const initializeApp = async () => {
+      if (!(fontsLoaded || fontError)) return;
+
+      // First check for updates (kill switch)
+      const updateRequired = await checkForUpdates();
+      
+      if (updateRequired) {
+        // If update is required, stop here and show update modal
+        setAppIsReady(true);
+        SplashScreen.hideAsync().catch(console.warn);
+        return;
+      }
+
+      // If no update required, proceed with auth check
+      if (!initialAuthCheckDone) {
+        await handleAuthRouting();
+      }
+    };
+
+    initializeApp();
+  }, [fontsLoaded, fontError, initialAuthCheckDone, checkForUpdates, handleAuthRouting]);
 
   useEffect(() => {
-    if (initialAuthCheckDone && (fontsLoaded || fontError)) {
+    if (initialAuthCheckDone && (fontsLoaded || fontError) && !updateRequired.required) {
       const timer = setTimeout(() => {
         setAppIsReady(true);
         SplashScreen.hideAsync().catch(console.warn);
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [initialAuthCheckDone, fontsLoaded, fontError]);
+  }, [initialAuthCheckDone, fontsLoaded, fontError, updateRequired.required]);
 
   useEffect(() => {
     if (fontError) {
       console.error('Font loading error:', fontError);
     }
   }, [fontError]);
+
+  // Show update modal if required
+  if (updateRequired.required) {
+    return (
+      <SoundProvider>
+        <UpdateRequiredModal
+          visible={true}
+          message={updateRequired.message}
+          onClose={__DEV__ ? () => setUpdateRequired({ required: false, message: '' }) : undefined}
+        />
+        <StatusBar style="light" />
+      </SoundProvider>
+    );
+  }
 
   if (!appIsReady) {
     return (
