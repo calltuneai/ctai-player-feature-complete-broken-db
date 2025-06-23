@@ -74,7 +74,9 @@ export default function AboutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About CallTuneAI</Text>
           <Text style={styles.paragraph}>
-            CallTuneAI revolutionizes predator hunting by leveraging cutting-edge AI technology 
+            CallTuneAI Player is a lightweight app designed to play predator calls — either 
+            uploaded by you or synced directly from your CallTuneAI Studio account (coming soon).
+            CallTuneAI Studio revolutionizes predator hunting by leveraging cutting-edge AI technology 
             to create the most realistic and effective predator calls available. Our system 
             analyzes and replicates intricate vocalizations with unprecedented accuracy.
           </Text>
@@ -110,11 +112,10 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PREYR Integration</Text>
+          <Text style={styles.sectionTitle}>PREYR Thermal Optics and Gear</Text>
           <Text style={styles.paragraph}>
             As part of the PREYR ecosystem, CallTuneAI Player seamlessly integrates with your 
-            thermal optics and hunting gear. Experience the future of predator hunting with 
-            our comprehensive solution.
+            calling systems, thermal optics and hunting gear available at our online gear store.
           </Text>
         </View>
         
