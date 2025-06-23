@@ -50,11 +50,10 @@ export default function RegisterScreen() {
 
   const handleOpenEmail = async () => {
     if (Platform.OS === 'web') {
-      // For web, try to open the user's default email client
-      const emailDomain = email.split('@')[1];
-      let emailUrl = 'mailto:';
+      // For web, try to open domain-specific email clients
+      const emailDomain = email.toLowerCase().split('@')[1];
+      let emailUrl = '';
       
-      // Try to open domain-specific email clients
       if (emailDomain?.includes('gmail.com')) {
         emailUrl = 'https://mail.google.com';
       } else if (emailDomain?.includes('outlook.com') || emailDomain?.includes('hotmail.com') || emailDomain?.includes('live.com')) {
@@ -63,9 +62,20 @@ export default function RegisterScreen() {
         emailUrl = 'https://mail.yahoo.com';
       } else if (emailDomain?.includes('icloud.com')) {
         emailUrl = 'https://www.icloud.com/mail';
+      } else {
+        // For other domains, try to use the system's default email handler
+        try {
+          window.location.href = 'mailto:';
+          return;
+        } catch (err) {
+          // If mailto fails, open Gmail as fallback
+          emailUrl = 'https://mail.google.com';
+        }
       }
       
-      window.open(emailUrl, '_blank');
+      if (emailUrl) {
+        window.open(emailUrl, '_blank');
+      }
       return;
     }
   
