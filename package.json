@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "EXPO_NO_TELEMETRY=1 expo start --clear",
+    "dev": "EXPO_NO_TELEMETRY=1 expo start --clear --tunnel",
+    "dev-local": "EXPO_NO_TELEMETRY=1 expo start --clear --localhost",
+    "dev-lan": "EXPO_NO_TELEMETRY=1 expo start --clear --lan",
     "lint": "expo lint",
     "build:ios": "eas build --platform ios --profile preview",
     "build:android": "eas build --platform android --profile preview",
