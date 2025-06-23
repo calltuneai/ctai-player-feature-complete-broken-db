@@ -35,13 +35,13 @@ const getDataFilePath = () => {
   return Platform.OS === 'web' ? '' : `${FileSystem.documentDirectory}sounds.json`;
 };
 
-// Sample predator call data with a working audio URL
+// Sample predator call data - you'll need to upload a real audio file to assets/audio/
 const createSampleSound = (): Sound => ({
   id: 'sample-predator-call-001',
   name: 'Sample Predator Call',
   description: 'A high-quality sample predator distress call to test your setup and demonstrate CallTuneAI capabilities.',
   duration: 30,
-  uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // This will be replaced with a working URL
+  uri: require('../assets/audio/sample-predator-call.mp3'), // You'll need to add this file
   size: 1024 * 512, // 512KB
   dateAdded: new Date().toISOString(),
   category: 'Distress',
@@ -185,7 +185,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       // Create and load new sound
       const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: sound.uri },
+        sound.isSample ? sound.uri : { uri: sound.uri },
         {
           shouldPlay: true,
           isLooping: true,
