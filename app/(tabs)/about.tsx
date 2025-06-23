@@ -89,7 +89,7 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pro Features</Text>
+          <Text style={styles.sectionTitle}>Calling Sound Studio Features</Text>
           <View style={styles.featureItem}>
             <View style={styles.featureBullet} />
             <Text style={styles.featureText}>AI-Generated Custom Calls</Text>
