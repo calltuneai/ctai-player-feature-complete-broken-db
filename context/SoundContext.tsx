@@ -35,6 +35,21 @@ const getDataFilePath = () => {
   return Platform.OS === 'web' ? '' : `${FileSystem.documentDirectory}sounds.json`;
 };
 
+// Sample predator call data
+const createSampleSound = (): Sound => ({
+  id: 'sample-predator-call-001',
+  name: 'Sample Predator Call',
+  description: 'A high-quality sample predator distress call to test your setup and demonstrate CallTuneAI capabilities.',
+  duration: 45,
+  uri: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Using a working sample audio URL
+  size: 1024 * 1024 * 2, // 2MB
+  dateAdded: new Date().toISOString(),
+  category: 'Distress',
+  favorite: false,
+  tags: ['sample', 'demo', 'distress', 'predator'],
+  isSample: true
+});
+
 export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [soundObject, setSoundObject] = useState<Audio.Sound | null>(null);
@@ -50,14 +65,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const initialize = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: false,
-        });
-
+        // Only set audio mode on native platforms
         if (Platform.OS !== 'web') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            shouldDuckAndroid: false,
+          });
+
           const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
           if (!dirInfo.exists) {
             await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
@@ -66,16 +82,48 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const fileInfo = await FileSystem.getInfoAsync(getDataFilePath());
           if (fileInfo.exists) {
             const data = await FileSystem.readAsStringAsync(getDataFilePath());
-            setSounds(JSON.parse(data));
+            const loadedSounds = JSON.parse(data);
+            
+            // Check if sample sound exists, if not add it
+            const hasSample = loadedSounds.some((sound: Sound) => sound.id === 'sample-predator-call-001');
+            if (!hasSample) {
+              const sampleSound = createSampleSound();
+              loadedSounds.unshift(sampleSound); // Add to beginning
+            }
+            
+            setSounds(loadedSounds);
+          } else {
+            // First time - add sample sound
+            const sampleSound = createSampleSound();
+            setSounds([sampleSound]);
           }
         } else {
+          // Web platform
           const storedSounds = localStorage.getItem('sounds');
-          if (storedSounds) setSounds(JSON.parse(storedSounds));
+          if (storedSounds) {
+            const loadedSounds = JSON.parse(storedSounds);
+            
+            // Check if sample sound exists, if not add it
+            const hasSample = loadedSounds.some((sound: Sound) => sound.id === 'sample-predator-call-001');
+            if (!hasSample) {
+              const sampleSound = createSampleSound();
+              loadedSounds.unshift(sampleSound); // Add to beginning
+            }
+            
+            setSounds(loadedSounds);
+          } else {
+            // First time - add sample sound
+            const sampleSound = createSampleSound();
+            setSounds([sampleSound]);
+          }
         }
 
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio:', error);
+        // Still add sample sound even if audio initialization fails
+        const sampleSound = createSampleSound();
+        setSounds([sampleSound]);
         setIsInitialized(true);
       }
     };
@@ -84,7 +132,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       if (soundObject) {
-        soundObject.unloadAsync();
+        soundObject.unloadAsync().catch(console.warn);
       }
     };
   }, []);
@@ -253,6 +301,12 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const soundToDelete = sounds.find(s => s.id === id);
       if (!soundToDelete) return;
+
+      // Don't allow deletion of sample sound
+      if (soundToDelete.isSample) {
+        console.log('Cannot delete sample sound');
+        return;
+      }
 
       if (currentSound && currentSound.id === id) {
         if (soundObject) {

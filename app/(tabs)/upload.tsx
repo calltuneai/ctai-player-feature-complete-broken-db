@@ -56,17 +56,23 @@ export default function UploadScreen() {
   const pickSound = async () => {
     try {
       if (Platform.OS === 'web') {
-        alert("File picking is not fully supported in the web preview. This would allow selecting audio files on a real device.");
-        
-        const mockFile = {
-          uri: 'https://example.com/sample-audio.mp3',
-          name: 'Sample Predator Call.mp3',
-          size: 1024 * 1024 * 2,
-          duration: 45,
-        };
-        
-        setSelectedFile(mockFile);
-        setSoundName('Sample Predator Call');
+        // Suppress error in web preview - just show a helpful message
+        if (Platform.OS === 'web') {
+          Alert.alert(
+            "File Upload Not Available",
+            "File picking is not available in the web preview. On a real device, this would allow you to select audio files from your device.\n\nTip: Check out the sample sound already in your Library to test playback!",
+            [
+              {
+                text: "Go to Library",
+                onPress: () => router.push('/')
+              },
+              {
+                text: "OK",
+                style: "cancel"
+              }
+            ]
+          );
+        }
         return;
       }
       
@@ -112,9 +118,7 @@ export default function UploadScreen() {
       }
     } catch (error) {
       console.error('Error picking document:', error);
-      if (Platform.OS === 'web') {
-        alert('Failed to select audio file.');
-      } else {
+      if (Platform.OS !== 'web') {
         Alert.alert('Error', 'Failed to select audio file.');
       }
     }
@@ -170,6 +174,7 @@ export default function UploadScreen() {
         category: category,
         favorite: false,
         tags: tags,
+        isSample: false
       };
       
       await addSound(newSound);
@@ -275,6 +280,11 @@ export default function UploadScreen() {
               </View>
               <Text style={styles.uploadText}>Tap to select an audio file</Text>
               <Text style={styles.uploadSubtext}>MP3, WAV, M4A, AAC, OGG</Text>
+              {Platform.OS === 'web' && (
+                <Text style={styles.webNotice}>
+                  Note: File upload not available in web preview
+                </Text>
+              )}
             </>
           )}
         </TouchableOpacity>
@@ -451,6 +461,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
+  },
+  webNotice: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: '#FF9500',
+    marginTop: 8,
+    textAlign: 'center',
   },
   selectedFileContainer: {
     width: '100%',

@@ -76,8 +76,9 @@ export default function RootLayout() {
         if (__DEV__) console.log('Redirecting to register');
         router.replace('/auth/register');
       } else if (authResult.isAuthenticated && currentRoute === 'auth') {
-        if (__DEV__) console.log('Redirecting to tabs');
-        router.replace('/(tabs)');
+        if (__DEV__) console.log('Redirecting to tabs - defaulting to Library');
+        // Explicitly route to the Library tab (index) instead of letting it default to Upload
+        router.replace('/(tabs)/');
       }
     } catch (error) {
       console.error('Auth check error:', error);

@@ -9,6 +9,7 @@ export interface Sound {
   category: string;
   favorite: boolean;
   tags: string[];
+  isSample?: boolean; // Flag to identify sample sounds
 }
 
 export type SoundCategory = 'Distress' | 'Predator' | 'Prey' | 'Other';
