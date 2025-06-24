@@ -162,7 +162,7 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Compact Branding Header */}
+        {/* Larger Branding Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
@@ -322,40 +322,40 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30, // Reduced top padding
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 40,
     minHeight: '100%',
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24, // Reduced from 32
+    marginBottom: 24,
   },
   logo: {
-    width: 80, // Reduced from 120
-    height: 80, // Reduced from 120
-    marginBottom: 12, // Reduced from 16
+    width: 100, // Increased from 80 to 100
+    height: 100, // Increased from 80 to 100
+    marginBottom: 12,
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 28, // Reduced from 32
+    fontSize: 28,
     marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 20, // Reduced from 24
+    fontSize: 20,
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 20, // Reduced from 24
+    marginBottom: 20,
   },
   title: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 18, // Reduced from 20
-    marginBottom: 6, // Reduced from 8
+    fontSize: 18,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12, // Reduced from 16
+    marginBottom: 12,
   },
   nameInput: {
     flex: 1,
@@ -396,8 +396,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 44, // Reduced from 50
-    marginBottom: 12, // Reduced from 16
+    height: 44,
+    marginBottom: 12,
   },
   input: {
     flex: 1,
@@ -414,13 +414,13 @@ const styles = StyleSheet.create({
   termsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 20, // Reduced from 24
+    marginBottom: 20,
     paddingHorizontal: 4,
   },
   checkbox: {
-    width: 18, // Reduced from 20
-    height: 18, // Reduced from 20
-    borderRadius: 3, // Reduced from 4
+    width: 18,
+    height: 18,
+    borderRadius: 3,
     borderWidth: 2,
     borderColor: '#AAAAAA',
     backgroundColor: 'transparent',
@@ -435,15 +435,15 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 11, // Reduced from 12
+    fontSize: 11,
     fontFamily: 'Inter-Bold',
   },
   termsText: {
     flex: 1,
-    fontSize: 12, // Reduced from 13
+    fontSize: 12,
     fontFamily: 'Inter-Regular',
     color: '#DDDDDD',
-    lineHeight: 16, // Reduced from 18
+    lineHeight: 16,
   },
   termsLink: {
     color: BRAND_COLORS.brightBlue,
@@ -456,8 +456,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    height: 48, // Reduced from 50
-    marginBottom: 20, // Reduced from 24
+    height: 48,
+    marginBottom: 20,
     gap: 6,
   },
   buttonDisabled: {
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 12, // Reduced from 16
+    paddingVertical: 12,
   },
   linkText: {
     color: '#0496FF',

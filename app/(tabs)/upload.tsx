@@ -413,8 +413,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 48,
-    height: 48,
+    width: 56, // Standardized size
+    height: 56, // Standardized size
     borderRadius: 12,
     marginRight: 16,
   },
