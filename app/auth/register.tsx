@@ -136,7 +136,11 @@ export default function RegisterScreen() {
         {/* Title Section */}
         <View style={styles.titleSection}>
           <DynamicText style={styles.title}>Create Account</DynamicText>
-          <DynamicText style={styles.subtitle}>Use It Free. No Credit Card, No Hassle, Just Upload and Play</DynamicText>
+          <View style={styles.subtitleContainer}>
+            <DynamicText style={styles.subtitle}>Free to use — no credit card required.</DynamicText>
+            <DynamicText style={styles.subtitle}>Upload your own sounds.</DynamicText>
+            <DynamicText style={styles.subtitle}>Play to any Bluetooth device.</DynamicText>
+          </View>
         </View>
 
         {/* Error Display */}
@@ -301,7 +305,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
     fontSize: 20,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  subtitleContainer: {
+    alignItems: 'center',
   },
   subtitle: {
     fontSize: 14,
@@ -309,6 +316,7 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 2,
   },
   errorContainer: {
     flexDirection: 'row',
