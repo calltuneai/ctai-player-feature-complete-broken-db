@@ -50,7 +50,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize audio and CLEAR all existing sounds
+  // Initialize audio and load existing sounds
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -61,39 +61,47 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           shouldDuckAndroid: false,
         });
 
-        // FORCE CLEAR ALL STORAGE - both web and mobile
+        // Load existing sounds instead of clearing them
         if (Platform.OS !== 'web') {
-          // Clear mobile storage
+          // Ensure directory exists
           const dirInfo = await FileSystem.getInfoAsync(getDirectoryPath());
-          if (dirInfo.exists) {
-            await FileSystem.deleteAsync(getDirectoryPath(), { idempotent: true });
+          if (!dirInfo.exists) {
             await FileSystem.makeDirectoryAsync(getDirectoryPath(), { intermediates: true });
           }
           
+          // Load existing sounds from file
           const fileInfo = await FileSystem.getInfoAsync(getDataFilePath());
           if (fileInfo.exists) {
-            await FileSystem.deleteAsync(getDataFilePath(), { idempotent: true });
+            try {
+              const soundsData = await FileSystem.readAsStringAsync(getDataFilePath());
+              const loadedSounds = JSON.parse(soundsData);
+              if (Array.isArray(loadedSounds)) {
+                setSounds(loadedSounds);
+              }
+            } catch (error) {
+              console.error('Error loading sounds from file:', error);
+              setSounds([]);
+            }
           }
         } else {
-          // Clear web storage completely
-          localStorage.removeItem('sounds');
-          localStorage.removeItem('calltuneai_sounds');
-          localStorage.removeItem('predator_sounds');
-          // Clear any other possible storage keys
-          const keys = Object.keys(localStorage);
-          keys.forEach(key => {
-            if (key.includes('sound') || key.includes('audio') || key.includes('sample')) {
-              localStorage.removeItem(key);
+          // Load existing sounds from localStorage
+          try {
+            const soundsData = localStorage.getItem('sounds');
+            if (soundsData) {
+              const loadedSounds = JSON.parse(soundsData);
+              if (Array.isArray(loadedSounds)) {
+                setSounds(loadedSounds);
+              }
             }
-          });
+          } catch (error) {
+            console.error('Error loading sounds from localStorage:', error);
+            setSounds([]);
+          }
         }
 
-        // Ensure sounds array is completely empty
-        setSounds([]);
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio:', error);
-        // Even if there's an error, ensure we start with empty sounds
         setSounds([]);
         setIsInitialized(true);
       }
@@ -352,7 +360,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           await FileSystem.deleteAsync(getDataFilePath(), { idempotent: true });
         }
       } else {
-        localStorage.clear();
+        localStorage.removeItem('sounds');
       }
 
       // Clear sounds array
