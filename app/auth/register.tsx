@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, ExternalLink } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
@@ -161,6 +161,7 @@ export default function RegisterScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Prominent Branding Header */}
         <View style={styles.header}>
@@ -297,7 +298,7 @@ export default function RegisterScreen() {
                   <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
                     Privacy Policy
                   </Text>
-                  . I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
+                  {'. '}I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
                 </Text>
               </View>
             </TouchableOpacity>
@@ -322,7 +323,7 @@ export default function RegisterScreen() {
             {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
-          {/* Sign In Link */}
+          {/* Sign In Link - Improved spacing */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/login')}
@@ -348,31 +349,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 40,
+    paddingBottom: 60, // Increased bottom padding for better spacing
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24, // Reduced from 32
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 16,
+    width: 100, // Slightly smaller
+    height: 100,
+    marginBottom: 12, // Reduced from 16
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 28, // Slightly smaller
     marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 24,
+    fontSize: 20, // Slightly smaller
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20, // Reduced from 24
   },
   title: {
     fontFamily: 'Orbitron-Bold',
@@ -413,7 +414,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 14, // Reduced from 16
   },
   nameInput: {
     flex: 1,
@@ -424,8 +425,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 50,
-    marginBottom: 16,
+    height: 48, // Slightly smaller
+    marginBottom: 14, // Reduced from 16
   },
   input: {
     flex: 1,
@@ -440,8 +441,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   passwordHints: {
-    marginTop: -12,
-    marginBottom: 16,
+    marginTop: -10, // Reduced from -12
+    marginBottom: 14, // Reduced from 16
     paddingHorizontal: 4,
   },
   passwordHint: {
@@ -455,7 +456,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   termsContainer: {
-    marginBottom: 24,
+    marginBottom: 20, // Reduced from 24
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -502,8 +503,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    height: 50,
-    marginBottom: 16,
+    height: 48, // Slightly smaller
+    marginBottom: 20, // Increased from 16 for better spacing
     gap: 6,
   },
   buttonDisabled: {
@@ -519,7 +520,8 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12, // Increased padding for better touch target
+    marginBottom: 20, // Added bottom margin for safe area
   },
   linkText: {
     color: '#0496FF',
