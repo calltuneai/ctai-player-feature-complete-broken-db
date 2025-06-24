@@ -30,15 +30,25 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showEmailMessage, setShowEmailMessage] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageType, setMessageType] = useState<'check_email' | 'verified'>('check_email');
 
   useEffect(() => {
     if (message === 'check_email') {
-      setShowEmailMessage(true);
+      setMessageType('check_email');
+      setShowMessage(true);
       // Auto-hide the message after 10 seconds
       const timer = setTimeout(() => {
-        setShowEmailMessage(false);
+        setShowMessage(false);
       }, 10000);
+      return () => clearTimeout(timer);
+    } else if (message === 'verified') {
+      setMessageType('verified');
+      setShowMessage(true);
+      // Auto-hide the verified message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowMessage(false);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [message]);
@@ -100,6 +110,24 @@ export default function LoginScreen() {
     router.push('/auth/forgot-password');
   };
 
+  const getMessageContent = () => {
+    if (messageType === 'verified') {
+      return {
+        icon: <CheckCircle size={16} color="#4CD964" />,
+        title: 'Email Verified!',
+        subtitle: 'Your account is now verified. You can sign in below.',
+        color: '#4CD964'
+      };
+    } else {
+      return {
+        icon: <CheckCircle size={16} color="#4CD964" />,
+        title: 'Account Created!',
+        subtitle: 'Check your email to verify your account, then sign in below.',
+        color: '#4CD964'
+      };
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -123,21 +151,23 @@ export default function LoginScreen() {
           <DynamicText style={styles.subtitle}>Sign in to continue using CallTuneAI</DynamicText>
         </View>
 
-        {/* Email Verification Message */}
-        {showEmailMessage && (
-          <View style={styles.emailMessageContainer}>
-            <CheckCircle size={16} color="#4CD964" />
-            <View style={styles.emailMessageText}>
-              <Text style={styles.emailMessageTitle}>Account Created!</Text>
-              <Text style={styles.emailMessageSubtitle}>
-                Check your email to verify your account, then sign in below.
+        {/* Status Message */}
+        {showMessage && (
+          <View style={[styles.messageContainer, { borderColor: `${getMessageContent().color}50` }]}>
+            {getMessageContent().icon}
+            <View style={styles.messageText}>
+              <Text style={[styles.messageTitle, { color: getMessageContent().color }]}>
+                {getMessageContent().title}
+              </Text>
+              <Text style={styles.messageSubtitle}>
+                {getMessageContent().subtitle}
               </Text>
             </View>
             <TouchableOpacity 
-              onPress={() => setShowEmailMessage(false)}
+              onPress={() => setShowMessage(false)}
               style={styles.dismissButton}
             >
-              <Text style={styles.dismissText}>×</Text>
+              <Text style={[styles.dismissText, { color: getMessageContent().color }]}>×</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -277,7 +307,7 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     textAlign: 'center',
   },
-  emailMessageContainer: {
+  messageContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: 'rgba(76, 217, 100, 0.1)',
@@ -285,19 +315,17 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(76, 217, 100, 0.3)',
   },
-  emailMessageText: {
+  messageText: {
     flex: 1,
     marginLeft: 8,
   },
-  emailMessageTitle: {
-    color: '#4CD964',
+  messageTitle: {
     fontFamily: 'Inter-SemiBold',
     fontSize: 14,
     marginBottom: 2,
   },
-  emailMessageSubtitle: {
+  messageSubtitle: {
     color: '#FFFFFF',
     fontFamily: 'Inter-Regular',
     fontSize: 13,
@@ -308,7 +336,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   dismissText: {
-    color: '#4CD964',
     fontSize: 18,
     fontFamily: 'Inter-Bold',
   },

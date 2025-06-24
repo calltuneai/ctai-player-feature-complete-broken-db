@@ -15,7 +15,11 @@ export default function VerifyScreen() {
     // Check URL parameters first
     if (success === 'true') {
       setVerificationStatus('success');
-      return;
+      // Auto-redirect to login after showing success briefly
+      const timer = setTimeout(() => {
+        router.replace('/auth/login?message=verified');
+      }, 2000);
+      return () => clearTimeout(timer);
     }
     
     if (error) {
@@ -57,6 +61,11 @@ export default function VerifyScreen() {
           
           if (userData?.is_verified) {
             setVerificationStatus('success');
+            // Auto-redirect to login after showing success briefly
+            const timer = setTimeout(() => {
+              router.replace('/auth/login?message=verified');
+            }, 2000);
+            return () => clearTimeout(timer);
           } else {
             setErrorMessage('Email verification is still pending');
             setVerificationStatus('error');
@@ -73,11 +82,11 @@ export default function VerifyScreen() {
     };
 
     checkVerificationStatus();
-  }, [success, error]);
+  }, [success, error, router]);
 
   const handleContinue = () => {
     if (verificationStatus === 'success') {
-      router.replace('/auth/login');
+      router.replace('/auth/login?message=verified');
     } else {
       router.replace('/auth/register');
     }
@@ -126,10 +135,15 @@ export default function VerifyScreen() {
         </View>
         <DynamicText style={styles.title}>Email Verified!</DynamicText>
         <DynamicText style={styles.description}>
-          Your email has been verified successfully. You can now sign in to your account and start using CallTuneAI Player.
+          Your email has been verified successfully. Redirecting to sign in...
         </DynamicText>
-        <TouchableOpacity style={styles.button} onPress={handleContinue}>
-          <DynamicText style={styles.buttonText}>Continue to Sign In</DynamicText>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View style={styles.progressFill} />
+          </View>
+        </View>
+        <TouchableOpacity style={styles.skipButton} onPress={handleContinue}>
+          <DynamicText style={styles.skipButtonText}>Continue Now</DynamicText>
         </TouchableOpacity>
       </View>
     </View>
@@ -179,6 +193,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     lineHeight: 24,
   },
+  progressContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  progressBar: {
+    width: '100%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4CD964',
+    borderRadius: 2,
+    width: '100%',
+    animation: 'progress 2s ease-in-out',
+  },
   button: {
     backgroundColor: '#4CD964',
     paddingVertical: 12,
@@ -192,5 +224,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  skipButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  skipButtonText: {
+    color: '#4CD964',
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
   },
 });
