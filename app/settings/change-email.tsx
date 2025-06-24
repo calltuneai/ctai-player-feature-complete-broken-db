@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Platform, Image, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, ArrowLeft, Loader } from 'lucide-react-native';
+import { Mail, Lock, ArrowLeft, Loader, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import * as Haptics from 'expo-haptics';
 import DynamicText from '../../components/DynamicText';
@@ -20,6 +20,7 @@ export default function ChangeEmailScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleBack = () => {
     router.back();
@@ -50,14 +51,20 @@ export default function ChangeEmailScreen() {
         return;
       }
 
-      // First verify the current password by attempting to sign in
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('Please sign in again to change your email');
         return;
       }
 
-      // Re-authenticate with current credentials
+      // Check if the new email is the same as current
+      if (user.email?.toLowerCase() === email.toLowerCase()) {
+        setError('This is already your current email address');
+        return;
+      }
+
+      // First verify the current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email!,
         password: password,
@@ -68,36 +75,106 @@ export default function ChangeEmailScreen() {
         return;
       }
 
-      // Update email
+      // Update email with proper redirect URL
       const { error: updateError } = await supabase.auth.updateUser({
         email: email.toLowerCase(),
+      }, {
+        emailRedirectTo: 'https://calltuneai.com/auth/verify'
       });
 
       if (updateError) {
-        if (updateError.message.includes('already registered')) {
-          setError('This email address is already in use');
+        if (updateError.message.includes('already registered') || 
+            updateError.message.includes('already been registered')) {
+          setError('This email address is already in use by another account');
+        } else if (updateError.message.includes('rate limit')) {
+          setError('Too many email change requests. Please wait a few minutes before trying again.');
         } else {
           setError(updateError.message);
         }
         return;
       }
 
-      if (Platform.OS === 'web') {
-        alert('Verification email sent. Please check your inbox and verify your new email address.');
-      } else {
-        Alert.alert(
-          'Verification Email Sent',
-          'Please check your inbox and verify your new email address. You may need to sign in again after verification.',
-          [{ text: 'OK', onPress: handleBack }]
-        );
-      }
+      // Success - show confirmation
+      setSuccess(true);
+      setError(null);
+
     } catch (err: any) {
       console.error('Error changing email:', err);
-      setError(err.message || 'An error occurred while updating your email');
+      if (err.message?.includes('fetch') || err.message?.includes('network')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={handleBack}
+          >
+            <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Image 
+              source={require('../../assets/images/icon.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <View style={styles.titleContainer}>
+              <DynamicText style={styles.title} numberOfLines={1}>Email Update</DynamicText>
+              <DynamicText style={styles.subtitle} numberOfLines={1}>Verification Required</DynamicText>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.successContainer}>
+          <View style={styles.successIconContainer}>
+            <CheckCircle size={48} color="#4CD964" />
+          </View>
+          
+          <Text style={styles.successTitle}>Verification Email Sent!</Text>
+          
+          <Text style={styles.successText}>
+            We've sent a verification email to <Text style={styles.emailText}>{email}</Text>. 
+            Please check your inbox and click the verification link to complete the email change.
+          </Text>
+
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructionsTitle}>Next Steps:</Text>
+            <View style={styles.instructionItem}>
+              <Text style={styles.instructionBullet}>1.</Text>
+              <Text style={styles.instructionText}>Check your email inbox (and spam folder)</Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <Text style={styles.instructionBullet}>2.</Text>
+              <Text style={styles.instructionText}>Click the verification link in the email</Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <Text style={styles.instructionBullet}>3.</Text>
+              <Text style={styles.instructionText}>Your email will be updated after verification</Text>
+            </View>
+            <View style={styles.instructionItem}>
+              <Text style={styles.instructionBullet}>4.</Text>
+              <Text style={styles.instructionText}>You may need to sign in again with your new email</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={handleBack}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -211,10 +288,10 @@ export default function ChangeEmailScreen() {
             {loading ? (
               <View style={styles.loadingContainer}>
                 <Loader size={24} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Updating Email...</Text>
+                <Text style={styles.buttonText}>Sending Verification...</Text>
               </View>
             ) : (
-              <Text style={styles.buttonText}>Update Email Address</Text>
+              <Text style={styles.buttonText}>Send Verification Email</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -289,6 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
+    lineHeight: 20,
   },
   formSection: {
     marginTop: 24,
@@ -392,5 +470,83 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  successContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    alignItems: 'center',
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(76, 217, 100, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontFamily: 'Orbitron-Bold',
+    color: '#4CD964',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  successText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  emailText: {
+    fontFamily: 'Inter-SemiBold',
+    color: BRAND_COLORS.brightBlue,
+  },
+  instructionsContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 32,
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  instructionBullet: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: BRAND_COLORS.brightBlue,
+    marginRight: 12,
+    minWidth: 20,
+  },
+  instructionText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#DDDDDD',
+    lineHeight: 20,
+  },
+  doneButton: {
+    backgroundColor: BRAND_COLORS.brightBlue,
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
 });
