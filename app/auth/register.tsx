@@ -136,7 +136,7 @@ export default function RegisterScreen() {
         {/* Title Section */}
         <View style={styles.titleSection}>
           <DynamicText style={styles.title}>Create Account</DynamicText>
-          <DynamicText style={styles.subtitle}>Use it free for a limited time</DynamicText>
+          <DynamicText style={styles.subtitle}>Use It Free. No Credit Card, No Hassle, Just Upload and Play</DynamicText>
         </View>
 
         {/* Error Display */}
@@ -308,6 +308,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
     textAlign: 'center',
+    lineHeight: 20,
   },
   errorContainer: {
     flexDirection: 'row',
