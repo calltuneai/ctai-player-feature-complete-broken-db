@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { Volume2 } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Timer } from 'lucide-react-native';
 import { useSounds } from '../context/SoundContext';
 import { BlurView } from 'expo-blur';
 
@@ -12,25 +12,51 @@ const BRAND_COLORS = {
   lightGray: '#D3D3D3',
 };
 
-// Import Slider conditionally and safely
-let Slider: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    const SliderModule = require('@react-native-community/slider');
-    Slider = SliderModule.default || SliderModule;
-  } catch (error) {
-    console.warn('Slider component not available:', error);
-  }
-}
-
 const SoundPlayer: React.FC = () => {
-  const { currentSound, volume, setVolume } = useSounds();
+  const { currentSound, isPlaying } = useSounds();
+  
+  // Session timer state - independent of individual sounds
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Start session timer when first sound plays
+  useEffect(() => {
+    if (isPlaying && !sessionStartTime) {
+      setSessionStartTime(new Date());
+    }
+  }, [isPlaying, sessionStartTime]);
+
+  // Update elapsed time every second
+  useEffect(() => {
+    if (!sessionStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+      setElapsedTime(elapsed);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
+
+  // Reset session timer
+  const resetSessionTimer = () => {
+    setSessionStartTime(null);
+    setElapsedTime(0);
+  };
 
   // Only show if there's a current sound
   if (!currentSound) return null;
 
-  const handleVolumeChange = (value: number) => {
-    setVolume(value);
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   const Container = Platform.OS === 'ios' ? BlurView : View;
@@ -40,41 +66,20 @@ const SoundPlayer: React.FC = () => {
 
   return (
     <Container style={styles.container} {...containerProps}>
-      <View style={styles.volumeContainer}>
-        <Volume2 size={16} color="#AAAAAA" />
-        
-        {Platform.OS === 'web' ? (
-          <View style={styles.webVolumeContainer}>
-            <Text style={styles.webVolumeText}>
-              Volume: {Math.round(volume * 100)}% (Use system controls)
-            </Text>
-          </View>
-        ) : Slider ? (
-          <>
-            <Slider
-              style={styles.volumeSlider}
-              minimumValue={0}
-              maximumValue={1}
-              value={volume}
-              onValueChange={handleVolumeChange}
-              minimumTrackTintColor={BRAND_COLORS.brightBlue}
-              maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
-              thumbStyle={{ 
-                backgroundColor: BRAND_COLORS.brightBlue,
-                width: 16,
-                height: 16,
-              }}
-              trackStyle={{ height: 3, borderRadius: 2 }}
-            />
-            <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
-          </>
-        ) : (
-          <View style={styles.fallbackContainer}>
-            <Text style={styles.fallbackText}>
-              Volume: {Math.round(volume * 100)}%
-            </Text>
-          </View>
-        )}
+      {/* Session Timer - Independent of individual sounds */}
+      <View style={styles.sessionContainer}>
+        <View style={styles.sessionTimer}>
+          <Timer size={16} color={BRAND_COLORS.brightBlue} />
+          <Text style={styles.sessionTimeText}>
+            Session: {formatElapsedTime(elapsedTime)}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.resetButton}
+          onPress={resetSessionTimer}
+        >
+          <Text style={styles.resetButtonText}>Reset</Text>
+        </TouchableOpacity>
       </View>
     </Container>
   );
@@ -92,39 +97,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  volumeContainer: {
+  sessionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sessionTimer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  volumeSlider: {
-    flex: 1,
-    height: 24,
-    marginHorizontal: 12,
+  sessionTimeText: {
+    color: BRAND_COLORS.brightBlue,
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    marginLeft: 6,
   },
-  volumeText: {
+  resetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+  },
+  resetButtonText: {
     color: '#AAAAAA',
     fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    width: 35,
-    textAlign: 'right',
-  },
-  webVolumeContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  webVolumeText: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-  },
-  fallbackContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  fallbackText: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
+    fontFamily: 'Inter-Medium',
   },
 });
 
