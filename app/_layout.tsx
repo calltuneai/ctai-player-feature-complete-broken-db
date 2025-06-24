@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Slot, SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { SoundProvider } from '../context/SoundContext';
@@ -67,7 +67,7 @@ export default function RootLayout() {
     'RobotoSlab-Bold': RobotoSlab_700Bold,
   });
 
-  // Handle deep links for email verification
+  // Handle deep links for email verification with better error handling
   useEffect(() => {
     const handleDeepLink = async (url: string) => {
       console.log('Deep link received:', url);
@@ -134,7 +134,7 @@ export default function RootLayout() {
     return () => subscription?.remove();
   }, [router]);
 
-  // Single initialization effect with better error handling
+  // Single initialization effect with better error handling and platform safety
   useEffect(() => {
     const initializeApp = async () => {
       // Wait for fonts to load
@@ -143,8 +143,20 @@ export default function RootLayout() {
       }
 
       try {
-        // Step 1: Check for app updates (kill switch)
-        const config = await checkAppConfig();
+        // Step 1: Check for app updates (kill switch) with timeout
+        const configPromise = checkAppConfig();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Config check timeout')), 10000)
+        );
+        
+        let config;
+        try {
+          config = await Promise.race([configPromise, timeoutPromise]);
+        } catch (error) {
+          console.warn('Config check failed, continuing with defaults:', error);
+          config = { mustUpdate: false, message: '', minVersion: '1.0.0' };
+        }
+        
         const currentVersion = getCurrentAppVersion();
         
         if (config.mustUpdate || isVersionOutdated(currentVersion, config.minVersion)) {
@@ -154,8 +166,20 @@ export default function RootLayout() {
           return;
         }
 
-        // Step 2: Handle authentication and routing
-        const authResult = await checkAuth();
+        // Step 2: Handle authentication and routing with timeout
+        const authPromise = checkAuth();
+        const authTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth check timeout')), 15000)
+        );
+        
+        let authResult;
+        try {
+          authResult = await Promise.race([authPromise, authTimeoutPromise]);
+        } catch (error) {
+          console.warn('Auth check failed, defaulting to unauthenticated:', error);
+          authResult = { isAuthenticated: false, isOffline: true };
+        }
+        
         const currentRoute = segments[0] || '';
 
         if (__DEV__) {
@@ -168,7 +192,7 @@ export default function RootLayout() {
           isOffline: authResult.isOffline
         });
 
-        // Route based on auth state
+        // Route based on auth state with safety checks
         if (!authResult.isAuthenticated && currentRoute !== 'auth') {
           if (__DEV__) console.log('Redirecting to register');
           router.replace('/auth/register');
@@ -184,7 +208,11 @@ export default function RootLayout() {
       } catch (error) {
         console.error('App initialization error:', error);
         // Fallback to auth screen on error
-        router.replace('/auth/register');
+        try {
+          router.replace('/auth/register');
+        } catch (routerError) {
+          console.error('Router error:', routerError);
+        }
         setAppState('ready');
         await SplashScreen.hideAsync();
       }
@@ -236,7 +264,7 @@ export default function RootLayout() {
       <View style={styles.container}>
         <Stack screenOptions={{ headerShown: false }} />
         <StatusBar style="light" />
-        {authState.isOffline && (
+        {authState.isOffline && Platform.OS !== 'web' && (
           <View style={styles.offlineIndicator}>
             <View style={styles.offlineDot} />
           </View>

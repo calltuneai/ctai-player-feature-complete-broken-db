@@ -34,7 +34,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
+        "appleId": "sheldon.charron@gmail.com",
+        "appleTeamId": "4WS2DF8MLB",
         "bundleIdentifier": "com.calltuneai.player"
       },
       "android": {
