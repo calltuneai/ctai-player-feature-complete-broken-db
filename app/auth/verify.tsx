@@ -7,41 +7,80 @@ import DynamicText from '../../components/DynamicText';
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const { token_hash, type } = useLocalSearchParams();
+  const { success, error } = useLocalSearchParams();
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    const verifyEmail = async () => {
-      if (token_hash && type === 'signup') {
-        try {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: token_hash as string,
-            type: 'signup'
-          });
+    // Check URL parameters first
+    if (success === 'true') {
+      setVerificationStatus('success');
+      return;
+    }
+    
+    if (error) {
+      let message = 'An error occurred during verification';
+      switch (error) {
+        case 'session_error':
+          message = 'Failed to establish session. Please try signing in.';
+          break;
+        case 'verification_failed':
+          message = 'Email verification failed. Please try again or contact support.';
+          break;
+        default:
+          message = 'Verification error. Please try again.';
+      }
+      setErrorMessage(message);
+      setVerificationStatus('error');
+      return;
+    }
 
-          if (error) {
-            console.error('Verification error:', error);
-            setErrorMessage(error.message);
+    // If no URL parameters, check current session
+    const checkVerificationStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          // Check if user is verified in database
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('is_verified')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userError) {
+            console.error('Error checking user verification:', userError);
+            setErrorMessage('Failed to check verification status');
             setVerificationStatus('error');
-          } else {
-            setVerificationStatus('success');
+            return;
           }
-        } catch (err: any) {
-          console.error('Verification error:', err);
-          setErrorMessage(err.message || 'An error occurred during verification');
+          
+          if (userData?.is_verified) {
+            setVerificationStatus('success');
+          } else {
+            setErrorMessage('Email verification is still pending');
+            setVerificationStatus('error');
+          }
+        } else {
+          setErrorMessage('No active session found');
           setVerificationStatus('error');
         }
-      } else {
-        setVerificationStatus('success');
+      } catch (err: any) {
+        console.error('Verification check error:', err);
+        setErrorMessage(err.message || 'Failed to verify email');
+        setVerificationStatus('error');
       }
     };
 
-    verifyEmail();
-  }, [token_hash, type]);
+    checkVerificationStatus();
+  }, [success, error]);
 
   const handleContinue = () => {
-    router.replace('/auth/login');
+    if (verificationStatus === 'success') {
+      router.replace('/auth/login');
+    } else {
+      router.replace('/auth/register');
+    }
   };
 
   if (verificationStatus === 'loading') {
@@ -72,7 +111,7 @@ export default function VerifyScreen() {
             {errorMessage || 'There was an error verifying your email address. Please try again or contact support.'}
           </DynamicText>
           <TouchableOpacity style={[styles.button, styles.errorButton]} onPress={handleContinue}>
-            <DynamicText style={styles.buttonText}>Back to Sign In</DynamicText>
+            <DynamicText style={styles.buttonText}>Back to Sign Up</DynamicText>
           </TouchableOpacity>
         </View>
       </View>
@@ -87,7 +126,7 @@ export default function VerifyScreen() {
         </View>
         <DynamicText style={styles.title}>Email Verified!</DynamicText>
         <DynamicText style={styles.description}>
-          Your email has been verified successfully. You can now sign in to your account.
+          Your email has been verified successfully. You can now sign in to your account and start using CallTuneAI Player.
         </DynamicText>
         <TouchableOpacity style={styles.button} onPress={handleContinue}>
           <DynamicText style={styles.buttonText}>Continue to Sign In</DynamicText>

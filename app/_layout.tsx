@@ -7,6 +7,8 @@ import { checkAuth } from '../lib/auth';
 import { checkAppConfig, getCurrentAppVersion, isVersionOutdated } from '../lib/app-config';
 import { StatusBar } from 'expo-status-bar';
 import UpdateRequiredModal from '../components/UpdateRequiredModal';
+import * as Linking from 'expo-linking';
+import { supabase } from '../lib/supabase';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -62,6 +64,73 @@ export default function RootLayout() {
     'RobotoSlab-Regular': RobotoSlab_400Regular,
     'RobotoSlab-Bold': RobotoSlab_700Bold,
   });
+
+  // Handle deep links for email verification
+  useEffect(() => {
+    const handleDeepLink = async (url: string) => {
+      console.log('Deep link received:', url);
+      
+      // Parse the URL to extract tokens
+      const urlObj = new URL(url);
+      const fragment = urlObj.hash.substring(1); // Remove the # character
+      const params = new URLSearchParams(fragment);
+      
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+      
+      if (accessToken && refreshToken && type === 'signup') {
+        try {
+          // Set the session in Supabase
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            console.error('Error setting session:', error);
+            router.push('/auth/verify?error=session_error');
+            return;
+          }
+          
+          if (data.session) {
+            // Update user verification status
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ 
+                is_verified: true, 
+                last_verified_at: new Date().toISOString() 
+              })
+              .eq('id', data.session.user.id);
+            
+            if (updateError) {
+              console.error('Error updating user verification:', updateError);
+            }
+            
+            // Navigate to verification success page
+            router.push('/auth/verify?success=true');
+          }
+        } catch (error) {
+          console.error('Error handling email verification:', error);
+          router.push('/auth/verify?error=verification_failed');
+        }
+      }
+    };
+
+    // Handle initial URL if app was opened via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink(url);
+      }
+    });
+
+    // Listen for incoming deep links while app is running
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => subscription?.remove();
+  }, [router]);
 
   // Single initialization effect
   useEffect(() => {

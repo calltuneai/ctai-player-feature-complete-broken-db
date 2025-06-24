@@ -58,6 +58,9 @@
               "scheme": "https",
               "host": "calltuneai.com",
               "pathPrefix": "/auth"
+            },
+            {
+              "scheme": "calltuneai"
             }
           ],
           "category": [
