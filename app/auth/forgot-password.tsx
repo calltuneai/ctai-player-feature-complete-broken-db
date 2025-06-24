@@ -31,7 +31,10 @@ export default function ForgotPasswordScreen() {
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase(), {
-        redirectTo: `${window.location.origin}/auth/reset`,
+        // Use deep link for mobile, fallback to website for web
+        redirectTo: Platform.OS === 'web' 
+          ? 'https://calltuneai.com/auth/reset'
+          : 'calltuneai://auth/reset',
       });
 
       if (error) {
@@ -80,7 +83,7 @@ export default function ForgotPasswordScreen() {
             <View style={styles.successTextContainer}>
               <Text style={styles.successTitle}>Reset Email Sent!</Text>
               <Text style={styles.successText}>
-                We've sent a password reset link to your email address. Please check your email and follow the instructions to reset your password.
+                We've sent a password reset link to your email address. The reset link will open directly in this app.
               </Text>
             </View>
           </View>

@@ -14,5 +14,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Configure redirect URL to use deep link for mobile
+    redirectTo: 'calltuneai://auth/verify',
   },
 });

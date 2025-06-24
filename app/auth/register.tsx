@@ -77,6 +77,7 @@ export default function RegisterScreen() {
 
       setRegistrationStep('creating');
       
+      // Use deep link redirect for mobile app
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -84,7 +85,11 @@ export default function RegisterScreen() {
           data: {
             first_name: firstName.trim(),
             last_name: lastName.trim()
-          }
+          },
+          // Use deep link for mobile, fallback to website for web
+          emailRedirectTo: Platform.OS === 'web' 
+            ? 'https://calltuneai.com/auth/verify'
+            : 'calltuneai://auth/verify'
         }
       });
 
@@ -165,7 +170,7 @@ export default function RegisterScreen() {
             <CheckCircle2 size={40} color="#4CD964" />
             <Text style={styles.successTitle}>Account Created!</Text>
             <Text style={styles.successText}>
-              Check your email to verify your account, then sign in to start using the app.
+              Check your email to verify your account. The verification link will open directly in this app.
             </Text>
             
             <TouchableOpacity
