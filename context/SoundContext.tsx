@@ -143,20 +143,22 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [volume, soundObject]);
 
-  // Playback status updates (with web safety)
+  // Playback status updates (with web safety and proper error handling)
   useEffect(() => {
-    if (!soundObject || Platform.OS === 'web') return;
+    if (!soundObject) return;
 
     const interval = setInterval(async () => {
       try {
         const status = await soundObject.getStatusAsync();
         if (status.isLoaded) {
-          setPlaybackPosition(status.positionMillis / 1000);
-          setPlaybackDuration(status.durationMillis ? status.durationMillis / 1000 : 0);
-          setIsPlaying(status.isPlaying);
+          setPlaybackPosition((status.positionMillis || 0) / 1000);
+          setPlaybackDuration((status.durationMillis || 0) / 1000);
+          setIsPlaying(status.isPlaying || false);
         }
       } catch (error) {
         console.error('Error getting playback status:', error);
+        // Clear the interval if there's an error
+        clearInterval(interval);
       }
     }, 500);
 
@@ -165,35 +167,47 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const loadAndPlaySound = async (sound: Sound) => {
     try {
+      // Stop and unload current sound
       if (soundObject) {
-        await soundObject.unloadAsync();
+        try {
+          await soundObject.stopAsync();
+          await soundObject.unloadAsync();
+        } catch (error) {
+          console.error('Error stopping previous sound:', error);
+        }
+        setSoundObject(null);
       }
 
-      // Web-safe audio creation
-      const audioConfig = Platform.OS === 'web' 
-        ? {
-            shouldPlay: true,
-            isLooping: true,
-            volume: volume,
-          }
-        : {
-            shouldPlay: true,
-            isLooping: true,
-            volume: volume,
-            shouldCorrectPitch: highQualityEnabled,
-          };
+      // Create new sound with web-safe configuration
+      const audioConfig: any = {
+        shouldPlay: true,
+        isLooping: true,
+        volume: volume,
+      };
 
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: sound.uri },
-        audioConfig,
-        (status) => {
-          if (status.isLoaded) {
+      // Add non-web specific options
+      if (Platform.OS !== 'web') {
+        audioConfig.shouldCorrectPitch = highQualityEnabled;
+      }
+
+      // Create status update callback with proper error handling
+      const onPlaybackStatusUpdate = (status: any) => {
+        try {
+          if (status && status.isLoaded) {
             if (status.didJustFinish && !status.isLooping) {
               setIsPlaying(false);
               setPlaybackPosition(0);
             }
           }
+        } catch (error) {
+          console.error('Error in playback status update:', error);
         }
+      };
+
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: sound.uri },
+        audioConfig,
+        onPlaybackStatusUpdate
       );
 
       setSoundObject(newSound);
@@ -201,6 +215,10 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(true);
     } catch (error) {
       console.error('Error loading and playing sound:', error);
+      // Reset state on error
+      setCurrentSound(null);
+      setIsPlaying(false);
+      setSoundObject(null);
       throw error;
     }
   };
@@ -212,6 +230,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsPlaying(true);
     } catch (error) {
       console.error('Error playing sound:', error);
+      setIsPlaying(false);
     }
   };
 
@@ -235,11 +254,14 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setPlaybackPosition(0);
     } catch (error) {
       console.error('Error stopping sound:', error);
+      // Force reset state even if stop fails
+      setIsPlaying(false);
+      setPlaybackPosition(0);
     }
   };
 
   const seekSound = async (position: number) => {
-    if (!soundObject || Platform.OS === 'web') return;
+    if (!soundObject) return;
     
     try {
       await soundObject.setPositionAsync(position * 1000);
@@ -299,7 +321,12 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (currentSound && currentSound.id === id) {
         if (soundObject) {
-          await soundObject.unloadAsync();
+          try {
+            await soundObject.stopAsync();
+            await soundObject.unloadAsync();
+          } catch (error) {
+            console.error('Error stopping sound during delete:', error);
+          }
           setSoundObject(null);
         }
         setCurrentSound(null);
@@ -310,7 +337,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (Platform.OS !== 'web') {
         const SOUNDS_DIRECTORY = getDirectoryPath();
         if (soundToDelete.uri.startsWith(SOUNDS_DIRECTORY)) {
-          await FileSystem.deleteAsync(soundToDelete.uri);
+          try {
+            await FileSystem.deleteAsync(soundToDelete.uri);
+          } catch (error) {
+            console.error('Error deleting sound file:', error);
+          }
         }
       }
 
@@ -348,7 +379,12 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       // Stop current playback
       if (soundObject) {
-        await soundObject.unloadAsync();
+        try {
+          await soundObject.stopAsync();
+          await soundObject.unloadAsync();
+        } catch (error) {
+          console.error('Error stopping sound during clear:', error);
+        }
         setSoundObject(null);
       }
       setCurrentSound(null);
