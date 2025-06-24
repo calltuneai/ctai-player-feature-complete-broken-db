@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, ExternalLink } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
@@ -32,7 +32,6 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPasswordHints, setShowPasswordHints] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const validateEmail = (email: string) => {
@@ -161,8 +160,9 @@ export default function RegisterScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* Prominent Branding Header */}
+        {/* Compact Branding Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
@@ -173,14 +173,10 @@ export default function RegisterScreen() {
           <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
         </View>
 
-        {/* Title Section */}
+        {/* Compact Title Section */}
         <View style={styles.titleSection}>
           <DynamicText style={styles.title}>Create Account</DynamicText>
-          <View style={styles.subtitleContainer}>
-            <DynamicText style={styles.subtitle}>Free to use — no credit card required.</DynamicText>
-            <DynamicText style={styles.subtitle}>Upload your own sounds.</DynamicText>
-            <DynamicText style={styles.subtitle}>Play to any Bluetooth device.</DynamicText>
-          </View>
+          <DynamicText style={styles.subtitle}>Free to use — no credit card required</DynamicText>
         </View>
 
         {/* Error Display */}
@@ -191,12 +187,12 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        {/* Form */}
+        {/* Compact Form */}
         <View style={styles.form}>
           {/* Name Fields */}
           <View style={styles.nameRow}>
             <View style={[styles.inputContainer, styles.nameInput]}>
-              <User size={18} color="#AAAAAA" />
+              <User size={16} color="#AAAAAA" />
               <TextInput
                 style={styles.input}
                 placeholder="First Name"
@@ -208,7 +204,7 @@ export default function RegisterScreen() {
               />
             </View>
             <View style={[styles.inputContainer, styles.nameInput]}>
-              <User size={18} color="#AAAAAA" />
+              <User size={16} color="#AAAAAA" />
               <TextInput
                 style={styles.input}
                 placeholder="Last Name"
@@ -223,7 +219,7 @@ export default function RegisterScreen() {
 
           {/* Email Field */}
           <View style={styles.inputContainer}>
-            <Mail size={18} color="#AAAAAA" />
+            <Mail size={16} color="#AAAAAA" />
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -238,19 +234,14 @@ export default function RegisterScreen() {
 
           {/* Password Field */}
           <View style={styles.inputContainer}>
-            <Lock size={18} color="#AAAAAA" />
+            <Lock size={16} color="#AAAAAA" />
             <TextInput
               style={[styles.input, { paddingRight: 40 }]}
-              placeholder="Password"
+              placeholder="Password (6+ characters)"
               placeholderTextColor="#AAAAAA"
               value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setShowPasswordHints(text.length > 0);
-              }}
+              onChangeText={setPassword}
               secureTextEntry={!showPassword}
-              onFocus={() => setShowPasswordHints(password.length > 0)}
-              onBlur={() => setShowPasswordHints(false)}
               editable={!loading}
             />
             <TouchableOpacity
@@ -258,50 +249,34 @@ export default function RegisterScreen() {
               onPress={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff size={18} color="#AAAAAA" />
+                <EyeOff size={16} color="#AAAAAA" />
               ) : (
-                <Eye size={18} color="#AAAAAA" />
+                <Eye size={16} color="#AAAAAA" />
               )}
             </TouchableOpacity>
           </View>
-          
-          {/* Password Hints - Only show when needed */}
-          {showPasswordHints && (
-            <View style={styles.passwordHints}>
-              <Text style={[
-                styles.passwordHint,
-                password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
-              ]}>
-                • At least 6 characters
-              </Text>
-            </View>
-          )}
 
-          {/* Terms and Conditions Agreement */}
-          <View style={styles.termsContainer}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setTermsAccepted(!termsAccepted)}
-              disabled={loading}
-            >
-              <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-                {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <View style={styles.termsTextContainer}>
-                <Text style={styles.termsText}>
-                  I agree to the{' '}
-                  <Text style={styles.termsLink} onPress={openTermsAndConditions}>
-                    Terms and Conditions
-                  </Text>
-                  {' '}and{' '}
-                  <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
-                    Privacy Policy
-                  </Text>
-                  . I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          {/* Compact Terms Agreement */}
+          <TouchableOpacity
+            style={styles.termsContainer}
+            onPress={() => setTermsAccepted(!termsAccepted)}
+            disabled={loading}
+          >
+            <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+              {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.termsText}>
+              I agree to the{' '}
+              <Text style={styles.termsLink} onPress={openTermsAndConditions}>
+                Terms and Conditions
+              </Text>
+              {' '}and{' '}
+              <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
+                Privacy Policy
+              </Text>
+              . I confirm that I will only upload sounds that I own or have permission to use.
+            </Text>
+          </TouchableOpacity>
 
           {/* Submit Button */}
           <TouchableOpacity
@@ -319,10 +294,10 @@ export default function RegisterScreen() {
             ]}>
               {loading ? 'Creating Account...' : 'Create Account'}
             </Text>
-            {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
+            {!loading && termsAccepted && <ChevronRight size={16} color="#FFFFFF" />}
           </TouchableOpacity>
 
-          {/* Sign In Link - Fixed spacing */}
+          {/* Sign In Link */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/login')}
@@ -347,49 +322,46 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: Platform.OS === 'ios' ? 60 : 40, // Increased bottom padding significantly
+    paddingTop: Platform.OS === 'ios' ? 50 : 30, // Reduced top padding
+    paddingBottom: 40,
+    minHeight: '100%',
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24, // Reduced from 32
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 16,
+    width: 80, // Reduced from 120
+    height: 80, // Reduced from 120
+    marginBottom: 12, // Reduced from 16
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 28, // Reduced from 32
     marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 24,
+    fontSize: 20, // Reduced from 24
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20, // Reduced from 24
   },
   title: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 20,
-    marginBottom: 8,
-  },
-  subtitleContainer: {
-    alignItems: 'center',
+    fontSize: 18, // Reduced from 20
+    marginBottom: 6, // Reduced from 8
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 2,
   },
   errorContainer: {
     flexDirection: 'row',
@@ -413,7 +385,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 12, // Reduced from 16
   },
   nameInput: {
     flex: 1,
@@ -424,8 +396,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 50,
-    marginBottom: 16,
+    height: 44, // Reduced from 50
+    marginBottom: 12, // Reduced from 16
   },
   input: {
     flex: 1,
@@ -439,32 +411,16 @@ const styles = StyleSheet.create({
     right: 16,
     padding: 6,
   },
-  passwordHints: {
-    marginTop: -12,
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  passwordHint: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-  },
-  passwordHintValid: {
-    color: '#4CD964',
-  },
-  passwordHintInvalid: {
-    color: '#FF3B30',
-  },
   termsContainer: {
-    marginBottom: 24,
-  },
-  checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    marginBottom: 20, // Reduced from 24
+    paddingHorizontal: 4,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: 18, // Reduced from 20
+    height: 18, // Reduced from 20
+    borderRadius: 3, // Reduced from 4
     borderWidth: 2,
     borderColor: '#AAAAAA',
     backgroundColor: 'transparent',
@@ -479,17 +435,15 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11, // Reduced from 12
     fontFamily: 'Inter-Bold',
   },
-  termsTextContainer: {
-    flex: 1,
-  },
   termsText: {
-    fontSize: 13,
+    flex: 1,
+    fontSize: 12, // Reduced from 13
     fontFamily: 'Inter-Regular',
     color: '#DDDDDD',
-    lineHeight: 18,
+    lineHeight: 16, // Reduced from 18
   },
   termsLink: {
     color: BRAND_COLORS.brightBlue,
@@ -502,8 +456,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    height: 50,
-    marginBottom: 24, // Increased from 16 to 24
+    height: 48, // Reduced from 50
+    marginBottom: 20, // Reduced from 24
     gap: 6,
   },
   buttonDisabled: {
@@ -519,8 +473,7 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 16, // Increased from 8 to 16 for more touch area
-    marginBottom: 20, // Added bottom margin for extra space
+    paddingVertical: 12, // Reduced from 16
   },
   linkText: {
     color: '#0496FF',
