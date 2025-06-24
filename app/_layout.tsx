@@ -32,11 +32,13 @@ import {
 } from '@expo-google-fonts/roboto-slab'
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 
+// Prevent auto-hide to control splash screen manually
 SplashScreen.preventAutoHideAsync();
 
 type AppState = 'loading' | 'update-required' | 'ready';
 
 export default function RootLayout() {
+  // CRITICAL: This hook MUST be called and NEVER removed
   useFrameworkReady();
   
   const [appState, setAppState] = useState<AppState>('loading');
@@ -70,17 +72,17 @@ export default function RootLayout() {
     const handleDeepLink = async (url: string) => {
       console.log('Deep link received:', url);
       
-      // Parse the URL to extract tokens
-      const urlObj = new URL(url);
-      const fragment = urlObj.hash.substring(1); // Remove the # character
-      const params = new URLSearchParams(fragment);
-      
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type = params.get('type');
-      
-      if (accessToken && refreshToken && type === 'signup') {
-        try {
+      try {
+        // Parse the URL to extract tokens
+        const urlObj = new URL(url);
+        const fragment = urlObj.hash.substring(1); // Remove the # character
+        const params = new URLSearchParams(fragment);
+        
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        const type = params.get('type');
+        
+        if (accessToken && refreshToken && type === 'signup') {
           // Set the session in Supabase
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -110,10 +112,10 @@ export default function RootLayout() {
             // Navigate directly to login with verified parameter
             router.push('/auth/login?verified=true');
           }
-        } catch (error) {
-          console.error('Error handling email verification:', error);
-          router.push('/auth/login?error=verification_failed');
         }
+      } catch (error) {
+        console.error('Error handling email verification:', error);
+        router.push('/auth/login?error=verification_failed');
       }
     };
 
@@ -132,7 +134,7 @@ export default function RootLayout() {
     return () => subscription?.remove();
   }, [router]);
 
-  // Single initialization effect
+  // Single initialization effect with better error handling
   useEffect(() => {
     const initializeApp = async () => {
       // Wait for fonts to load
