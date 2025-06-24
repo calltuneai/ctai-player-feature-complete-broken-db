@@ -294,11 +294,11 @@ export default function RegisterScreen() {
                   <Text style={styles.termsLink} onPress={openTermsAndConditions}>
                     Terms and Conditions
                   </Text>
-                  {' '}and{' '}
+                  <Text style={styles.termsText}> and </Text>
                   <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
                     Privacy Policy
                   </Text>
-                  {'. '}I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
+                  <Text style={styles.termsText}>. I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.</Text>
                 </Text>
               </View>
             </TouchableOpacity>
