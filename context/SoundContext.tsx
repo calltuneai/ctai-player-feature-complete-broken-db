@@ -50,7 +50,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize audio and load sounds
+  // One-time initialization
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -75,13 +75,16 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     initialize();
+  }, []);
 
+  // Dedicated soundObject lifecycle management
+  useEffect(() => {
     return () => {
       if (soundObject) {
         soundObject.unloadAsync().catch(console.error);
       }
     };
-  }, []);
+  }, [soundObject]);
 
   // Load local sounds
   const loadLocalSounds = async () => {
@@ -150,7 +153,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const interval = setInterval(async () => {
       try {
         const status = await soundObject.getStatusAsync();
-        if (status && status.isLoaded) {
+        if (status.isLoaded) {
           setPlaybackPosition((status.positionMillis || 0) / 1000);
           setPlaybackDuration((status.durationMillis || 0) / 1000);
           setIsPlaying(status.isPlaying || false);
@@ -190,25 +193,14 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioConfig.shouldCorrectPitch = highQualityEnabled;
       }
 
-      // Create status update callback with comprehensive error handling
+      // Create status update callback with proper error handling
       const onPlaybackStatusUpdate = (status: any) => {
         try {
-          // Check if status exists and has required properties
-          if (!status) {
-            console.warn('Received undefined status in playback update');
-            return;
-          }
-
-          // Only process if status is loaded
-          if (status.isLoaded === true) {
+          if (status && status.isLoaded) {
             if (status.didJustFinish && !status.isLooping) {
               setIsPlaying(false);
               setPlaybackPosition(0);
             }
-          } else if (status.error) {
-            console.error('Audio playback error:', status.error);
-            setIsPlaying(false);
-            setCurrentSound(null);
           }
         } catch (error) {
           console.error('Error in playback status update:', error);
