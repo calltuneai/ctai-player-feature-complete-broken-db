@@ -231,17 +231,28 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Submit Button - Same style as Register */}
+          {/* Submit Button - Improved stability */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button, 
+              loading && styles.buttonDisabled,
+              (!email || !password) && styles.buttonInactive
+            ]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={loading || !email || !password}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>
-              {loading ? 'Signing In...' : 'Sign In'}
-            </Text>
-            {!loading && <ChevronRight size={18} color="#FFFFFF" />}
+            <View style={styles.buttonContent}>
+              <Text style={[
+                styles.buttonText,
+                (!email || !password) && styles.buttonTextInactive
+              ]}>
+                {loading ? 'Signing In...' : 'Sign In'}
+              </Text>
+              {!loading && email && password && (
+                <ChevronRight size={18} color="#FFFFFF" />
+              )}
+            </View>
           </TouchableOpacity>
 
           {/* Register Link - Same style as Register */}
@@ -389,22 +400,42 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
     height: 50,
     marginBottom: 16,
-    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Improved button stability
+    shadowColor: '#0496FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   buttonDisabled: {
     opacity: 0.7,
+  },
+  buttonInactive: {
+    backgroundColor: 'rgba(4, 150, 255, 0.5)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    // Prevent layout shifts
+    minHeight: 24,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  buttonTextInactive: {
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   linkButton: {
     alignItems: 'center',
