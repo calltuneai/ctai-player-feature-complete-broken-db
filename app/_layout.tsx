@@ -89,7 +89,7 @@ export default function RootLayout() {
           
           if (error) {
             console.error('Error setting session:', error);
-            router.push('/auth/verify?error=session_error');
+            router.push('/auth/login?error=session_error');
             return;
           }
           
@@ -107,12 +107,12 @@ export default function RootLayout() {
               console.error('Error updating user verification:', updateError);
             }
             
-            // Navigate to verification success page
-            router.push('/auth/verify?success=true');
+            // Navigate directly to login with verified parameter
+            router.push('/auth/login?verified=true');
           }
         } catch (error) {
           console.error('Error handling email verification:', error);
-          router.push('/auth/verify?error=verification_failed');
+          router.push('/auth/login?error=verification_failed');
         }
       }
     };

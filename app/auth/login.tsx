@@ -24,7 +24,7 @@ const BRAND_COLORS = {
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { message } = useLocalSearchParams();
+  const { message, verified } = useLocalSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,16 +42,16 @@ export default function LoginScreen() {
         setShowMessage(false);
       }, 10000);
       return () => clearTimeout(timer);
-    } else if (message === 'verified') {
+    } else if (verified === 'true') {
       setMessageType('verified');
       setShowMessage(true);
-      // Auto-hide the verified message after 5 seconds
+      // Auto-hide the verified message after 8 seconds
       const timer = setTimeout(() => {
         setShowMessage(false);
-      }, 5000);
+      }, 8000);
       return () => clearTimeout(timer);
     }
-  }, [message]);
+  }, [message, verified]);
 
   const handleLogin = async () => {
     try {

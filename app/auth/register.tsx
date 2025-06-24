@@ -62,7 +62,7 @@ export default function RegisterScreen() {
         return;
       }
 
-      // Use deep link redirect for mobile app
+      // Use direct redirect to login page for both web and mobile
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -71,10 +71,10 @@ export default function RegisterScreen() {
             first_name: firstName.trim(),
             last_name: lastName.trim()
           },
-          // Use deep link for mobile, fallback to website for web
+          // Direct redirect to login page with verification parameter
           emailRedirectTo: Platform.OS === 'web' 
-            ? 'https://calltuneai.com/auth/verify'
-            : 'calltuneai://auth/verify'
+            ? `${window.location.origin}/auth/login?verified=true`
+            : 'calltuneai://auth/login?verified=true'
         }
       });
 
