@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CD964',
     borderRadius: 2,
     width: '100%',
-    animation: 'progress 2s ease-in-out',
   },
   button: {
     backgroundColor: '#4CD964',
