@@ -26,9 +26,9 @@ export async function getUserSettings(userId: string) {
       .from('user_settings')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    if (error) {
       console.error('Error fetching user settings:', error);
       return null;
     }
