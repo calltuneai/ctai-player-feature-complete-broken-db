@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Play, Pause, SkipBack, SkipForward, Repeat } from 'lucide-react-native';
+import { Play, Pause, SkipBack, SkipForward, Repeat, Volume2, Timer } from 'lucide-react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSounds } from '../context/SoundContext';
 import { BlurView } from 'expo-blur';
+import Slider from '@react-native-community/slider';
 
 // CallTuneAI brand colors
 const BRAND_COLORS = {
@@ -24,14 +25,57 @@ const SoundPlayer: React.FC = () => {
     playSound, 
     pauseSound, 
     seekSound,
-    toggleLooping
+    toggleLooping,
+    volume,
+    setVolume
   } = useSounds();
+
+  // Session timer state
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+
+  // Start session timer when first sound plays
+  useEffect(() => {
+    if (isPlaying && !sessionStartTime) {
+      setSessionStartTime(new Date());
+    }
+  }, [isPlaying, sessionStartTime]);
+
+  // Update elapsed time every second
+  useEffect(() => {
+    if (!sessionStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const elapsed = Math.floor((now.getTime() - sessionStartTime.getTime()) / 1000);
+      setElapsedTime(elapsed);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionStartTime]);
+
+  // Reset session timer
+  const resetSessionTimer = () => {
+    setSessionStartTime(null);
+    setElapsedTime(0);
+  };
 
   if (!currentSound) return null;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
@@ -58,11 +102,29 @@ const SoundPlayer: React.FC = () => {
 
   return (
     <Container style={styles.container} {...containerProps}>
+      {/* Session Timer */}
+      <View style={styles.sessionHeader}>
+        <View style={styles.sessionTimer}>
+          <Timer size={16} color={BRAND_COLORS.brightBlue} />
+          <Text style={styles.sessionTimeText}>
+            Session: {formatElapsedTime(elapsedTime)}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.resetButton}
+          onPress={resetSessionTimer}
+        >
+          <Text style={styles.resetButtonText}>Reset</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Sound Info */}
       <View style={styles.infoContainer}>
         <Text style={styles.title} numberOfLines={1}>{currentSound.name}</Text>
         <Text style={styles.category}>{currentSound.category}</Text>
       </View>
       
+      {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <Text style={styles.time}>{formatTime(playbackPosition)}</Text>
         <TouchableOpacity 
@@ -74,9 +136,34 @@ const SoundPlayer: React.FC = () => {
         </TouchableOpacity>
         <Text style={styles.time}>{formatTime(playbackDuration)}</Text>
       </View>
+
+      {/* Volume Control */}
+      <View style={styles.volumeContainer}>
+        <Volume2 size={16} color="#AAAAAA" />
+        <Slider
+          style={styles.volumeSlider}
+          minimumValue={0}
+          maximumValue={1}
+          value={volume}
+          onValueChange={setVolume}
+          minimumTrackTintColor={BRAND_COLORS.brightBlue}
+          maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
+          thumbStyle={{ 
+            backgroundColor: BRAND_COLORS.brightBlue,
+            width: 20,
+            height: 20,
+          }}
+          trackStyle={{ height: 4, borderRadius: 2 }}
+        />
+        <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
+      </View>
       
+      {/* Controls */}
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.controlButton} onPress={() => seekSound(Math.max(0, playbackPosition - 10))}>
+        <TouchableOpacity 
+          style={styles.controlButton} 
+          onPress={() => seekSound(Math.max(0, playbackPosition - 10))}
+        >
           <SkipBack size={24} color="#FFFFFF" />
         </TouchableOpacity>
         
@@ -91,7 +178,10 @@ const SoundPlayer: React.FC = () => {
           )}
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.controlButton} onPress={() => seekSound(Math.min(playbackDuration, playbackPosition + 10))}>
+        <TouchableOpacity 
+          style={styles.controlButton} 
+          onPress={() => seekSound(Math.min(playbackDuration, playbackPosition + 10))}
+        >
           <SkipForward size={24} color="#FFFFFF" />
         </TouchableOpacity>
         
@@ -116,6 +206,36 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sessionTimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sessionTimeText: {
+    color: BRAND_COLORS.brightBlue,
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    marginLeft: 6,
+  },
+  resetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+  },
+  resetButtonText: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
   },
   infoContainer: {
     flexDirection: 'row',
@@ -157,6 +277,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     width: 40,
+  },
+  volumeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  volumeSlider: {
+    flex: 1,
+    height: 30,
+    marginHorizontal: 12,
+  },
+  volumeText: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    width: 35,
+    textAlign: 'right',
   },
   controls: {
     flexDirection: 'row',

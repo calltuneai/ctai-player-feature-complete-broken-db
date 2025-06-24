@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, X, Filter, CreditCard as Edit, Trash2, Share } from 'lucide-react-native';
 import { useSounds } from '../../context/SoundContext';
 import SoundCard from '../../components/SoundCard';
+import SoundPlayer from '../../components/SoundPlayer';
 import EmptyState from '../../components/EmptyState';
 import { Sound, SoundCategory } from '../../types/sound';
 import * as Haptics from 'expo-haptics';
@@ -17,7 +18,7 @@ const BRAND_COLORS = {
 };
 
 export default function LibraryScreen() {
-  const { sounds, deleteSound } = useSounds();
+  const { sounds, deleteSound, currentSound } = useSounds();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -176,24 +177,29 @@ export default function LibraryScreen() {
 
       {renderCategoryFilter()}
 
-      {filteredSounds.length === 0 ? (
-        <EmptyState
-          type={sounds.length === 0 ? 'library' : (showFavoritesOnly ? 'favorites' : 'search')}
-        />
-      ) : (
-        <FlatList
-          data={filteredSounds}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <SoundCard
-              sound={item}
-              onOptionsPress={handleOptionsPress}
-            />
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <View style={[styles.contentContainer, currentSound && styles.contentWithPlayer]}>
+        {filteredSounds.length === 0 ? (
+          <EmptyState
+            type={sounds.length === 0 ? 'library' : (showFavoritesOnly ? 'favorites' : 'search')}
+          />
+        ) : (
+          <FlatList
+            data={filteredSounds}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <SoundCard
+                sound={item}
+                onOptionsPress={handleOptionsPress}
+              />
+            )}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
+      </View>
+
+      {/* Sound Player - Shows when a sound is loaded */}
+      {currentSound && <SoundPlayer />}
 
       <Modal
         visible={optionsModalVisible}
@@ -314,6 +320,12 @@ const styles = StyleSheet.create({
   },
   selectedCategoryButtonText: {
     color: '#FFFFFF',
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  contentWithPlayer: {
+    marginBottom: 180, // Make room for the expanded player
   },
   listContent: {
     paddingHorizontal: 16,

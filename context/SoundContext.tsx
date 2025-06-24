@@ -11,7 +11,9 @@ interface SoundContextType {
   isLooping: boolean;
   playbackPosition: number;
   playbackDuration: number;
+  volume: number;
   highQualityEnabled: boolean;
+  setVolume: (volume: number) => void;
   setHighQualityEnabled: (enabled: boolean) => void;
   loadAndPlaySound: (sound: Sound) => Promise<void>;
   playSound: () => Promise<void>;
@@ -44,6 +46,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLooping, setIsLooping] = useState(true);
   const [playbackPosition, setPlaybackPosition] = useState(0);
   const [playbackDuration, setPlaybackDuration] = useState(0);
+  const [volume, setVolume] = useState(0.7); // Default to 70% volume
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -127,6 +130,13 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     saveSounds();
   }, [sounds, isInitialized]);
 
+  // Update volume when it changes
+  useEffect(() => {
+    if (soundObject) {
+      soundObject.setVolumeAsync(volume);
+    }
+  }, [volume, soundObject]);
+
   // Playback status updates
   useEffect(() => {
     if (!soundObject) return;
@@ -160,7 +170,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {
           shouldPlay: true,
           isLooping: true,
-          volume: 1.0,
+          volume: volume,
           shouldCorrectPitch: highQualityEnabled,
         },
         (status) => {
@@ -361,7 +371,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isLooping,
         playbackPosition,
         playbackDuration,
+        volume,
         highQualityEnabled,
+        setVolume,
         setHighQualityEnabled,
         loadAndPlaySound,
         playSound,
