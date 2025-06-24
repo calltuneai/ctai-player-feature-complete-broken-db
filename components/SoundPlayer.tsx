@@ -4,16 +4,6 @@ import { Volume2 } from 'lucide-react-native';
 import { useSounds } from '../context/SoundContext';
 import { BlurView } from 'expo-blur';
 
-// Only import Slider on non-web platforms
-let Slider: any = null;
-if (Platform.OS !== 'web') {
-  try {
-    Slider = require('@react-native-community/slider').default;
-  } catch (error) {
-    console.warn('Slider not available on this platform');
-  }
-}
-
 // CallTuneAI brand colors
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -22,6 +12,17 @@ const BRAND_COLORS = {
   lightGray: '#D3D3D3',
 };
 
+// Import Slider conditionally and safely
+let Slider: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const SliderModule = require('@react-native-community/slider');
+    Slider = SliderModule.default || SliderModule;
+  } catch (error) {
+    console.warn('Slider component not available:', error);
+  }
+}
+
 const SoundPlayer: React.FC = () => {
   const { currentSound, volume, setVolume } = useSounds();
 
@@ -29,9 +30,7 @@ const SoundPlayer: React.FC = () => {
   if (!currentSound) return null;
 
   const handleVolumeChange = (value: number) => {
-    if (Platform.OS !== 'web') {
-      setVolume(value);
-    }
+    setVolume(value);
   };
 
   const Container = Platform.OS === 'ios' ? BlurView : View;
@@ -70,7 +69,11 @@ const SoundPlayer: React.FC = () => {
             <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
           </>
         ) : (
-          <Text style={styles.volumeText}>Volume: {Math.round(volume * 100)}%</Text>
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>
+              Volume: {Math.round(volume * 100)}%
+            </Text>
+          </View>
         )}
       </View>
     </Container>
@@ -110,6 +113,15 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   webVolumeText: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+  },
+  fallbackContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  fallbackText: {
     color: '#AAAAAA',
     fontSize: 12,
     fontFamily: 'Inter-Regular',
