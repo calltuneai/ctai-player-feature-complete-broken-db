@@ -14,7 +14,6 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
-import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -119,7 +118,7 @@ export default function RegisterScreen() {
         if (authError.message.includes('User already registered') || 
             authError.message.includes('already been registered') ||
             authError.message.includes('email address is already registered')) {
-          setError(`This email address is already registered. Please sign in instead or use a different email address.`);
+          setError('This email address is already registered. Please sign in instead or use a different email address.');
         } else if (authError.message.includes('Password should be')) {
           setError('Password must be at least 6 characters long');
         } else if (authError.message.includes('Invalid email')) {
@@ -163,28 +162,25 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Prominent Branding Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <DynamicText style={styles.brandTitle}>CallTuneAI</DynamicText>
-          <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
+          <Text style={styles.brandTitle}>CallTuneAI</Text>
+          <Text style={styles.brandSubtitle}>Player</Text>
         </View>
 
-        {/* Title Section */}
         <View style={styles.titleSection}>
-          <DynamicText style={styles.title}>Create Account</DynamicText>
+          <Text style={styles.title}>Create Account</Text>
           <View style={styles.subtitleContainer}>
-            <DynamicText style={styles.subtitle}>Free to use — no credit card required.</DynamicText>
-            <DynamicText style={styles.subtitle}>Upload your own sounds.</DynamicText>
-            <DynamicText style={styles.subtitle}>Play to any Bluetooth device.</DynamicText>
+            <Text style={styles.subtitle}>Free to use — no credit card required.</Text>
+            <Text style={styles.subtitle}>Upload your own sounds.</Text>
+            <Text style={styles.subtitle}>Play to any Bluetooth device.</Text>
           </View>
         </View>
 
-        {/* Error Display */}
         {error && (
           <View style={styles.errorContainer}>
             <AlertCircle size={16} color="#FF3B30" />
@@ -192,9 +188,7 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        {/* Form */}
         <View style={styles.form}>
-          {/* Name Fields */}
           <View style={styles.nameRow}>
             <View style={[styles.inputContainer, styles.nameInput]}>
               <User size={18} color="#AAAAAA" />
@@ -222,7 +216,6 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* Email Field */}
           <View style={styles.inputContainer}>
             <Mail size={18} color="#AAAAAA" />
             <TextInput
@@ -237,7 +230,6 @@ export default function RegisterScreen() {
             />
           </View>
 
-          {/* Password Field */}
           <View style={styles.inputContainer}>
             <Lock size={18} color="#AAAAAA" />
             <TextInput
@@ -266,7 +258,6 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
           
-          {/* Password Hints - Only show when needed */}
           {showPasswordHints && (
             <View style={styles.passwordHints}>
               <Text style={[
@@ -278,7 +269,6 @@ export default function RegisterScreen() {
             </View>
           )}
 
-          {/* Terms and Conditions Agreement */}
           <View style={styles.termsContainer}>
             <TouchableOpacity
               style={styles.checkboxContainer}
@@ -304,7 +294,6 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Submit Button */}
           <TouchableOpacity
             style={[
               styles.button, 
@@ -323,7 +312,6 @@ export default function RegisterScreen() {
             {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
-          {/* Sign In Link - Improved spacing */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/login')}
@@ -349,31 +337,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 60, // Increased bottom padding for better spacing
+    paddingBottom: 60,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24, // Reduced from 32
+    marginBottom: 24,
   },
   logo: {
-    width: 100, // Slightly smaller
+    width: 100,
     height: 100,
-    marginBottom: 12, // Reduced from 16
+    marginBottom: 12,
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 28, // Slightly smaller
+    fontSize: 28,
     marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 20, // Slightly smaller
+    fontSize: 20,
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 20, // Reduced from 24
+    marginBottom: 20,
   },
   title: {
     fontFamily: 'Orbitron-Bold',
@@ -414,7 +402,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 14, // Reduced from 16
+    marginBottom: 14,
   },
   nameInput: {
     flex: 1,
@@ -425,8 +413,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 48, // Slightly smaller
-    marginBottom: 14, // Reduced from 16
+    height: 48,
+    marginBottom: 14,
   },
   input: {
     flex: 1,
@@ -441,8 +429,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   passwordHints: {
-    marginTop: -10, // Reduced from -12
-    marginBottom: 14, // Reduced from 16
+    marginTop: -10,
+    marginBottom: 14,
     paddingHorizontal: 4,
   },
   passwordHint: {
@@ -456,7 +444,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   termsContainer: {
-    marginBottom: 20, // Reduced from 24
+    marginBottom: 20,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -503,8 +491,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    height: 48, // Slightly smaller
-    marginBottom: 20, // Increased from 16 for better spacing
+    height: 48,
+    marginBottom: 20,
     gap: 6,
   },
   buttonDisabled: {
@@ -520,8 +508,8 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 12, // Increased padding for better touch target
-    marginBottom: 20, // Added bottom margin for safe area
+    paddingVertical: 12,
+    marginBottom: 20,
   },
   linkText: {
     color: '#0496FF',

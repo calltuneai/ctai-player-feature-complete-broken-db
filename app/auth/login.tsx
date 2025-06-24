@@ -13,7 +13,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { storeAuthData } from '../../lib/auth';
 import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, CircleCheck as CheckCircle } from 'lucide-react-native';
-import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -109,20 +108,20 @@ export default function LoginScreen() {
   const getMessageContent = () => {
     if (messageType === 'verified') {
       return {
-        icon: <CheckCircle size={16} color="#4CD964" />,
         title: 'Email Verified!',
         subtitle: 'Your account is now verified. You can sign in below.',
         color: '#4CD964'
       };
     } else {
       return {
-        icon: <CheckCircle size={16} color="#4CD964" />,
         title: 'Account Created!',
         subtitle: 'Check your email to verify your account, then sign in below.',
         color: '#4CD964'
       };
     }
   };
+
+  const messageContent = getMessageContent();
 
   return (
     <KeyboardAvoidingView
@@ -136,31 +135,31 @@ export default function LoginScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <DynamicText style={styles.brandTitle}>CallTuneAI</DynamicText>
-          <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
+          <Text style={styles.brandTitle}>CallTuneAI</Text>
+          <Text style={styles.brandSubtitle}>Player</Text>
         </View>
 
         <View style={styles.titleSection}>
-          <DynamicText style={styles.title}>Welcome Back</DynamicText>
-          <DynamicText style={styles.subtitle}>Sign in to continue using CallTuneAI</DynamicText>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue using CallTuneAI</Text>
         </View>
 
         {showMessage && (
-          <View style={[styles.messageContainer, { borderColor: `${getMessageContent().color}50` }]}>
-            {getMessageContent().icon}
+          <View style={[styles.messageContainer, { borderColor: `${messageContent.color}50` }]}>
+            <CheckCircle size={16} color={messageContent.color} />
             <View style={styles.messageText}>
-              <Text style={[styles.messageTitle, { color: getMessageContent().color }]}>
-                {getMessageContent().title}
+              <Text style={[styles.messageTitle, { color: messageContent.color }]}>
+                {messageContent.title}
               </Text>
               <Text style={styles.messageSubtitle}>
-                {getMessageContent().subtitle}
+                {messageContent.subtitle}
               </Text>
             </View>
             <TouchableOpacity 
               onPress={() => setShowMessage(false)}
               style={styles.dismissButton}
             >
-              <Text style={[styles.dismissText, { color: getMessageContent().color }]}>×</Text>
+              <Text style={[styles.dismissText, { color: messageContent.color }]}>×</Text>
             </TouchableOpacity>
           </View>
         )}

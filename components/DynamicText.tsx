@@ -6,6 +6,7 @@ interface DynamicTextProps extends TextProps {
   size?: number;
   adjustsFontSizeToFit?: boolean;
   numberOfLines?: number;
+  children: React.ReactNode;
 }
 
 const DynamicText: React.FC<DynamicTextProps> = ({
