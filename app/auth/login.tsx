@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { storeAuthData } from '../../lib/auth';
 import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, CircleCheck as CheckCircle } from 'lucide-react-native';
+import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -36,6 +37,7 @@ export default function LoginScreen() {
     if (message === 'check_email') {
       setMessageType('check_email');
       setShowMessage(true);
+      // Auto-hide the message after 10 seconds
       const timer = setTimeout(() => {
         setShowMessage(false);
       }, 10000);
@@ -43,6 +45,7 @@ export default function LoginScreen() {
     } else if (verified === 'true') {
       setMessageType('verified');
       setShowMessage(true);
+      // Auto-hide the verified message after 8 seconds
       const timer = setTimeout(() => {
         setShowMessage(false);
       }, 8000);
@@ -77,6 +80,7 @@ export default function LoginScreen() {
       }
 
       if (data.session) {
+        // Check if user is verified
         const { data: userData } = await supabase
           .from('users')
           .select('is_verified')
@@ -85,6 +89,7 @@ export default function LoginScreen() {
 
         const isVerified = userData?.is_verified || false;
         
+        // Store auth data for offline access
         await storeAuthData(data.session, isVerified);
         
         if (isVerified) {
@@ -108,12 +113,14 @@ export default function LoginScreen() {
   const getMessageContent = () => {
     if (messageType === 'verified') {
       return {
+        icon: <CheckCircle size={16} color="#4CD964" />,
         title: 'Email Verified!',
         subtitle: 'Your account is now verified. You can sign in below.',
         color: '#4CD964'
       };
     } else {
       return {
+        icon: <CheckCircle size={16} color="#4CD964" />,
         title: 'Account Created!',
         subtitle: 'Check your email to verify your account, then sign in below.',
         color: '#4CD964'
@@ -121,49 +128,51 @@ export default function LoginScreen() {
     }
   };
 
-  const messageContent = getMessageContent();
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
       <View style={styles.content}>
+        {/* Consistent Branding Header - Same as Register */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.brandTitle}>CallTuneAI</Text>
-          <Text style={styles.brandSubtitle}>Player</Text>
+          <DynamicText style={styles.brandTitle}>CallTuneAI</DynamicText>
+          <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
         </View>
 
+        {/* Title Section - Same spacing as Register */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue using CallTuneAI</Text>
+          <DynamicText style={styles.title}>Welcome Back</DynamicText>
+          <DynamicText style={styles.subtitle}>Sign in to continue using CallTuneAI</DynamicText>
         </View>
 
+        {/* Status Message */}
         {showMessage && (
-          <View style={[styles.messageContainer, { borderColor: `${messageContent.color}50` }]}>
-            <CheckCircle size={16} color={messageContent.color} />
+          <View style={[styles.messageContainer, { borderColor: `${getMessageContent().color}50` }]}>
+            {getMessageContent().icon}
             <View style={styles.messageText}>
-              <Text style={[styles.messageTitle, { color: messageContent.color }]}>
-                {messageContent.title}
+              <Text style={[styles.messageTitle, { color: getMessageContent().color }]}>
+                {getMessageContent().title}
               </Text>
               <Text style={styles.messageSubtitle}>
-                {messageContent.subtitle}
+                {getMessageContent().subtitle}
               </Text>
             </View>
             <TouchableOpacity 
               onPress={() => setShowMessage(false)}
               style={styles.dismissButton}
             >
-              <Text style={[styles.dismissText, { color: messageContent.color }]}>×</Text>
+              <Text style={[styles.dismissText, { color: getMessageContent().color }]}>×</Text>
             </TouchableOpacity>
           </View>
         )}
 
+        {/* Error Display - Same style as Register */}
         {error && (
           <View style={styles.errorContainer}>
             <AlertCircle size={16} color="#FF3B30" />
@@ -171,7 +180,9 @@ export default function LoginScreen() {
           </View>
         )}
 
+        {/* Form - Same layout as Register */}
         <View style={styles.form}>
+          {/* Email Field - Same style as Register */}
           <View style={styles.inputContainer}>
             <Mail size={18} color="#AAAAAA" />
             <TextInput
@@ -186,6 +197,7 @@ export default function LoginScreen() {
             />
           </View>
 
+          {/* Password Field - Same style as Register */}
           <View style={styles.inputContainer}>
             <Lock size={18} color="#AAAAAA" />
             <TextInput
@@ -209,6 +221,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Forgot Password Link */}
           <TouchableOpacity
             style={styles.forgotPasswordButton}
             onPress={handleForgotPassword}
@@ -218,6 +231,7 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
 
+          {/* Submit Button - Improved stability */}
           <TouchableOpacity
             style={[
               styles.button, 
@@ -241,6 +255,7 @@ export default function LoginScreen() {
             </View>
           </TouchableOpacity>
 
+          {/* Register Link - Same style as Register */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/register')}
@@ -391,6 +406,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    // Improved button stability
     shadowColor: '#0496FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -410,6 +426,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    // Prevent layout shifts
     minHeight: 24,
   },
   buttonText: {

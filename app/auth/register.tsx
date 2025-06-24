@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, ExternalLink } from 'lucide-react-native';
+import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
   deepBlue: '#2C3E50',
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
         if (authError.message.includes('User already registered') || 
             authError.message.includes('already been registered') ||
             authError.message.includes('email address is already registered')) {
-          setError('This email address is already registered. Please sign in instead or use a different email address.');
+          setError(`This email address is already registered. Please sign in instead or use a different email address.`);
         } else if (authError.message.includes('Password should be')) {
           setError('Password must be at least 6 characters long');
         } else if (authError.message.includes('Invalid email')) {
@@ -160,27 +161,29 @@ export default function RegisterScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
+        {/* Prominent Branding Header */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/icon.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.brandTitle}>CallTuneAI</Text>
-          <Text style={styles.brandSubtitle}>Player</Text>
+          <DynamicText style={styles.brandTitle}>CallTuneAI</DynamicText>
+          <DynamicText style={styles.brandSubtitle}>Player</DynamicText>
         </View>
 
+        {/* Title Section */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>Create Account</Text>
+          <DynamicText style={styles.title}>Create Account</DynamicText>
           <View style={styles.subtitleContainer}>
-            <Text style={styles.subtitle}>Free to use — no credit card required.</Text>
-            <Text style={styles.subtitle}>Upload your own sounds.</Text>
-            <Text style={styles.subtitle}>Play to any Bluetooth device.</Text>
+            <DynamicText style={styles.subtitle}>Free to use — no credit card required.</DynamicText>
+            <DynamicText style={styles.subtitle}>Upload your own sounds.</DynamicText>
+            <DynamicText style={styles.subtitle}>Play to any Bluetooth device.</DynamicText>
           </View>
         </View>
 
+        {/* Error Display */}
         {error && (
           <View style={styles.errorContainer}>
             <AlertCircle size={16} color="#FF3B30" />
@@ -188,7 +191,9 @@ export default function RegisterScreen() {
           </View>
         )}
 
+        {/* Form */}
         <View style={styles.form}>
+          {/* Name Fields */}
           <View style={styles.nameRow}>
             <View style={[styles.inputContainer, styles.nameInput]}>
               <User size={18} color="#AAAAAA" />
@@ -216,6 +221,7 @@ export default function RegisterScreen() {
             </View>
           </View>
 
+          {/* Email Field */}
           <View style={styles.inputContainer}>
             <Mail size={18} color="#AAAAAA" />
             <TextInput
@@ -230,6 +236,7 @@ export default function RegisterScreen() {
             />
           </View>
 
+          {/* Password Field */}
           <View style={styles.inputContainer}>
             <Lock size={18} color="#AAAAAA" />
             <TextInput
@@ -258,6 +265,7 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
           
+          {/* Password Hints - Only show when needed */}
           {showPasswordHints && (
             <View style={styles.passwordHints}>
               <Text style={[
@@ -269,6 +277,7 @@ export default function RegisterScreen() {
             </View>
           )}
 
+          {/* Terms and Conditions Agreement */}
           <View style={styles.termsContainer}>
             <TouchableOpacity
               style={styles.checkboxContainer}
@@ -284,16 +293,17 @@ export default function RegisterScreen() {
                   <Text style={styles.termsLink} onPress={openTermsAndConditions}>
                     Terms and Conditions
                   </Text>
-                  <Text style={styles.termsText}> and </Text>
+                  {' '}and{' '}
                   <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
                     Privacy Policy
                   </Text>
-                  <Text style={styles.termsText}>. I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.</Text>
+                  . I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
                 </Text>
               </View>
             </TouchableOpacity>
           </View>
 
+          {/* Submit Button */}
           <TouchableOpacity
             style={[
               styles.button, 
@@ -312,6 +322,7 @@ export default function RegisterScreen() {
             {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
+          {/* Sign In Link */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/login')}
@@ -337,31 +348,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 60,
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 12,
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   brandTitle: {
     fontFamily: 'Orbitron-Bold',
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 32,
     marginBottom: 4,
   },
   brandSubtitle: {
     fontFamily: 'Orbitron-Medium',
     color: BRAND_COLORS.brightBlue,
-    fontSize: 20,
+    fontSize: 24,
   },
   titleSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   title: {
     fontFamily: 'Orbitron-Bold',
@@ -402,7 +413,7 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   nameInput: {
     flex: 1,
@@ -413,8 +424,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     paddingHorizontal: 16,
-    height: 48,
-    marginBottom: 14,
+    height: 50,
+    marginBottom: 16,
   },
   input: {
     flex: 1,
@@ -429,8 +440,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   passwordHints: {
-    marginTop: -10,
-    marginBottom: 14,
+    marginTop: -12,
+    marginBottom: 16,
     paddingHorizontal: 4,
   },
   passwordHint: {
@@ -444,7 +455,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   termsContainer: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -491,8 +502,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0496FF',
     borderRadius: 8,
-    height: 48,
-    marginBottom: 20,
+    height: 50,
+    marginBottom: 16,
     gap: 6,
   },
   buttonDisabled: {
@@ -508,8 +519,7 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 12,
-    marginBottom: 20,
+    paddingVertical: 8,
   },
   linkText: {
     color: '#0496FF',
