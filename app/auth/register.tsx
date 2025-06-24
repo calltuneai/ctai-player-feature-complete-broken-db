@@ -89,12 +89,22 @@ export default function RegisterScreen() {
       });
 
       if (authError) {
-        if (authError.message.includes('User already registered')) {
-          setError('This email is already registered. Please sign in instead.');
+        // Handle specific error cases with clear, actionable messages
+        if (authError.message.includes('User already registered') || 
+            authError.message.includes('already been registered') ||
+            authError.message.includes('email address is already registered')) {
+          setError(`This email address is already registered. Please sign in instead or use a different email address.`);
         } else if (authError.message.includes('Password should be')) {
           setError('Password must be at least 6 characters long');
+        } else if (authError.message.includes('Invalid email')) {
+          setError('Please enter a valid email address');
+        } else if (authError.message.includes('Signup is disabled')) {
+          setError('Account registration is temporarily disabled. Please try again later.');
+        } else if (authError.message.includes('Email rate limit exceeded')) {
+          setError('Too many registration attempts. Please wait a few minutes before trying again.');
         } else {
-          setError(authError.message);
+          // Generic fallback with helpful suggestion
+          setError(`Registration failed: ${authError.message}. If this email is already registered, please try signing in instead.`);
         }
         return;
       }
@@ -107,7 +117,12 @@ export default function RegisterScreen() {
       }
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'An error occurred during registration');
+      // Handle network or unexpected errors
+      if (err.message?.includes('fetch')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError('An unexpected error occurred during registration. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -331,7 +346,7 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: 'rgba(255, 59, 48, 0.1)',
     borderRadius: 8,
     padding: 12,
@@ -343,6 +358,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontFamily: 'Inter-Medium',
     fontSize: 13,
+    lineHeight: 18,
   },
   successContainer: {
     alignItems: 'center',
