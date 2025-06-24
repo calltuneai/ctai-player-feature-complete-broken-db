@@ -8,6 +8,21 @@ declare global {
 
 export function useFrameworkReady() {
   useEffect(() => {
-    window.frameworkReady?.()
-  })
+    const callFrameworkReady = () => {
+      window.frameworkReady?.();
+    };
+
+    // Check if document is already fully loaded
+    if (document.readyState === 'complete') {
+      callFrameworkReady();
+    } else {
+      // Wait for the complete page load including all media elements
+      window.addEventListener('load', callFrameworkReady);
+      
+      // Cleanup event listener
+      return () => {
+        window.removeEventListener('load', callFrameworkReady);
+      };
+    }
+  }, []);
 }
