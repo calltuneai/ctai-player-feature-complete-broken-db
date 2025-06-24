@@ -288,21 +288,18 @@ export default function UploadScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Demo File Section */}
+        {/* Simple Demo Option */}
         {!selectedFile && (
           <View style={styles.demoSection}>
-            <Text style={styles.demoTitle}>Don't have an audio file?</Text>
+            <Text style={styles.demoText}>Don't have an audio file?</Text>
             <TouchableOpacity 
               style={styles.demoButton}
               onPress={loadDemoFile}
               disabled={isUploading}
             >
-              <Play size={20} color="#FFFFFF" />
+              <Play size={16} color="#FFFFFF" />
               <Text style={styles.demoButtonText}>Try Demo File</Text>
             </TouchableOpacity>
-            <Text style={styles.demoDescription}>
-              Load a sample rabbit distress call to test the app's features and Bluetooth connectivity
-            </Text>
           </View>
         )}
 
@@ -383,7 +380,10 @@ export default function UploadScreen() {
       {/* Footer Button */}
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={[styles.uploadButton, (!selectedFile || !soundName.trim() || isUploading) && styles.disabledButton]}
+          style={[
+            styles.uploadButton, 
+            (!selectedFile || !soundName.trim() || isUploading) && styles.disabledButton
+          ]}
           onPress={handleUpload}
           disabled={!selectedFile || !soundName.trim() || isUploading}
         >
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     minHeight: 120,
   },
   uploadIconContainer: {
@@ -503,48 +503,30 @@ const styles = StyleSheet.create({
     color: BRAND_COLORS.brightBlue,
   },
   demoSection: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 12,
   },
-  demoTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    textAlign: 'center',
+  demoText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#AAAAAA',
   },
   demoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: BRAND_COLORS.brightBlue,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    gap: 8,
-    shadowColor: BRAND_COLORS.brightBlue,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: 'rgba(4, 150, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
   },
   demoButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#FFFFFF',
-  },
-  demoDescription: {
     fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#AAAAAA',
-    textAlign: 'center',
-    lineHeight: 20,
+    fontFamily: 'Inter-Medium',
+    color: BRAND_COLORS.brightBlue,
   },
   formContainer: {
     flex: 1,
@@ -641,6 +623,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: BRAND_COLORS.deepBlue, // Ensure solid background
   },
   uploadButton: {
     backgroundColor: BRAND_COLORS.brightBlue,
