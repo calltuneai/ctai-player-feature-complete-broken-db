@@ -123,11 +123,11 @@ export default function UploadScreen() {
       
       const duration = status.durationMillis ? status.durationMillis / 1000 : 0;
       
-      // Pre-fill form with demo data
-      setSoundName('Rabbit Distress Call (Demo)');
+      // Pre-fill form with demo data - Updated title and removed sample tag
+      setSoundName('Rabbit Distress (Demo)');
       setDescription('Sample predator call - perfect for testing Bluetooth connectivity and audio playback');
       setCategory('Distress');
-      setTags(['demo', 'rabbit', 'distress', 'sample']);
+      setTags(['demo', 'rabbit', 'distress']); // Removed 'sample' tag
       
       setSelectedFile({
         uri: demoFileUri,
