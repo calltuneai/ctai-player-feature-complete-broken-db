@@ -3,15 +3,6 @@ import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { Sound } from '../types/sound';
 import { Platform } from 'react-native';
-import { supabase } from '../lib/supabase';
-import { 
-  getUserSounds, 
-  saveSoundToDatabase, 
-  updateSoundInDatabase, 
-  deleteSoundFromDatabase,
-  uploadSoundFile,
-  convertUserSoundToSound 
-} from '../lib/sounds';
 
 interface SoundContextType {
   sounds: Sound[];
@@ -22,7 +13,6 @@ interface SoundContextType {
   playbackDuration: number;
   volume: number;
   highQualityEnabled: boolean;
-  isLoading: boolean;
   setVolume: (volume: number) => void;
   setHighQualityEnabled: (enabled: boolean) => void;
   loadAndPlaySound: (sound: Sound) => Promise<void>;
@@ -36,7 +26,6 @@ interface SoundContextType {
   toggleFavorite: (id: string) => Promise<void>;
   updateSound: (sound: Sound) => Promise<void>;
   clearAllSounds: () => Promise<void>;
-  syncSounds: () => Promise<void>;
 }
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);
@@ -60,8 +49,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [volume, setVolume] = useState(0.7);
   const [highQualityEnabled, setHighQualityEnabled] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Initialize audio and load sounds
   useEffect(() => {
@@ -74,18 +61,8 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           shouldDuckAndroid: false,
         });
 
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUser(user);
-
-        if (user) {
-          // Load sounds from database for authenticated users
-          await syncSounds();
-        } else {
-          // Load local sounds for unauthenticated users (fallback)
-          await loadLocalSounds();
-        }
-
+        // Load local sounds
+        await loadLocalSounds();
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing audio:', error);
@@ -103,30 +80,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Listen for auth changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          setCurrentUser(session.user);
-          await syncSounds();
-        } else if (event === 'SIGNED_OUT') {
-          setCurrentUser(null);
-          setSounds([]);
-          if (soundObject) {
-            await soundObject.unloadAsync();
-            setSoundObject(null);
-          }
-          setCurrentSound(null);
-          setIsPlaying(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [soundObject]);
-
-  // Load local sounds (fallback for offline/unauthenticated users)
+  // Load local sounds
   const loadLocalSounds = async () => {
     try {
       if (Platform.OS !== 'web') {
@@ -158,32 +112,9 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Sync sounds with database
-  const syncSounds = async () => {
-    if (!currentUser) return;
-
-    try {
-      setIsLoading(true);
-      const userSounds = await getUserSounds(currentUser.id);
-      
-      // Convert database sounds to local format
-      const convertedSounds = await Promise.all(
-        userSounds.map(userSound => convertUserSoundToSound(userSound))
-      );
-      
-      setSounds(convertedSounds);
-    } catch (error) {
-      console.error('Error syncing sounds:', error);
-      // Fallback to local sounds if database sync fails
-      await loadLocalSounds();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Save sounds locally (backup)
+  // Save sounds locally
   useEffect(() => {
-    if (!isInitialized || !currentUser) return;
+    if (!isInitialized) return;
 
     const saveSoundsLocally = async () => {
       try {
@@ -200,7 +131,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     saveSoundsLocally();
-  }, [sounds, isInitialized, currentUser]);
+  }, [sounds, isInitialized]);
 
   // Update volume when it changes
   useEffect(() => {
@@ -320,46 +251,29 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addSound = async (sound: Sound) => {
     try {
-      if (currentUser) {
-        // Upload to database and storage
-        let filePath = sound.file_path;
+      // Store locally on device - perfect for field use!
+      if (Platform.OS !== 'web') {
+        const SOUNDS_DIRECTORY = getDirectoryPath();
         
-        // If it's a new file (not from database), upload it
-        if (!filePath && sound.uri && !sound.uri.startsWith('http')) {
+        const fileInfo = await FileSystem.getInfoAsync(sound.uri);
+        if (!fileInfo.exists) {
+          throw new Error('Sound file does not exist');
+        }
+
+        if (!sound.uri.startsWith(SOUNDS_DIRECTORY)) {
           const fileName = sound.uri.split('/').pop() || `sound-${Date.now()}.mp3`;
-          filePath = await uploadSoundFile(currentUser.id, sound.uri, fileName);
-        }
-
-        if (filePath) {
-          const userSound = await saveSoundToDatabase(currentUser.id, sound, filePath);
-          const convertedSound = await convertUserSoundToSound(userSound);
-          setSounds(prevSounds => [convertedSound, ...prevSounds]);
-        }
-      } else {
-        // Fallback to local storage for unauthenticated users
-        if (Platform.OS !== 'web') {
-          const SOUNDS_DIRECTORY = getDirectoryPath();
+          const newUri = `${SOUNDS_DIRECTORY}${fileName}`;
           
-          const fileInfo = await FileSystem.getInfoAsync(sound.uri);
-          if (!fileInfo.exists) {
-            throw new Error('Sound file does not exist');
-          }
-
-          if (!sound.uri.startsWith(SOUNDS_DIRECTORY)) {
-            const fileName = sound.uri.split('/').pop() || `sound-${Date.now()}.mp3`;
-            const newUri = `${SOUNDS_DIRECTORY}${fileName}`;
-            
-            await FileSystem.copyAsync({
-              from: sound.uri,
-              to: newUri
-            });
-            
-            sound.uri = newUri;
-          }
+          await FileSystem.copyAsync({
+            from: sound.uri,
+            to: newUri
+          });
+          
+          sound.uri = newUri;
         }
-
-        setSounds(prevSounds => [sound, ...prevSounds]);
       }
+
+      setSounds(prevSounds => [sound, ...prevSounds]);
     } catch (error) {
       console.error('Error adding sound:', error);
       throw error;
@@ -380,16 +294,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsPlaying(false);
       }
 
-      if (currentUser && soundToDelete.file_path) {
-        // Delete from database and storage
-        await deleteSoundFromDatabase(id, soundToDelete.file_path);
-      } else {
-        // Delete local file
-        if (Platform.OS !== 'web') {
-          const SOUNDS_DIRECTORY = getDirectoryPath();
-          if (soundToDelete.uri.startsWith(SOUNDS_DIRECTORY)) {
-            await FileSystem.deleteAsync(soundToDelete.uri);
-          }
+      // Delete local file
+      if (Platform.OS !== 'web') {
+        const SOUNDS_DIRECTORY = getDirectoryPath();
+        if (soundToDelete.uri.startsWith(SOUNDS_DIRECTORY)) {
+          await FileSystem.deleteAsync(soundToDelete.uri);
         }
       }
 
@@ -400,57 +309,26 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleFavorite = async (id: string) => {
-    try {
-      const sound = sounds.find(s => s.id === id);
-      if (!sound) return;
-
-      const newFavoriteStatus = !sound.favorite;
-
-      if (currentUser && sound.file_path) {
-        // Update in database
-        await updateSoundInDatabase(id, { is_favorite: newFavoriteStatus });
-      }
-
-      // Update local state
-      setSounds(prevSounds => 
-        prevSounds.map(s => 
-          s.id === id 
-            ? { ...s, favorite: newFavoriteStatus } 
-            : s
-        )
-      );
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
+    setSounds(prevSounds => 
+      prevSounds.map(sound => 
+        sound.id === id 
+          ? { ...sound, favorite: !sound.favorite } 
+          : sound
+      )
+    );
   };
 
   const updateSound = async (updatedSound: Sound) => {
-    try {
-      if (currentUser && updatedSound.file_path) {
-        // Update in database
-        await updateSoundInDatabase(updatedSound.id, {
-          name: updatedSound.name,
-          description: updatedSound.description,
-          category: updatedSound.category,
-          tags: updatedSound.tags,
-          is_favorite: updatedSound.favorite,
-        });
-      }
+    setSounds(prevSounds => 
+      prevSounds.map(sound => 
+        sound.id === updatedSound.id 
+          ? updatedSound 
+          : sound
+      )
+    );
 
-      // Update local state
-      setSounds(prevSounds => 
-        prevSounds.map(sound => 
-          sound.id === updatedSound.id 
-            ? updatedSound 
-            : sound
-        )
-      );
-
-      if (currentSound && currentSound.id === updatedSound.id) {
-        setCurrentSound(updatedSound);
-      }
-    } catch (error) {
-      console.error('Error updating sound:', error);
+    if (currentSound && currentSound.id === updatedSound.id) {
+      setCurrentSound(updatedSound);
     }
   };
 
@@ -463,13 +341,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       setCurrentSound(null);
       setIsPlaying(false);
-
-      if (currentUser) {
-        // Delete all user sounds from database
-        // Note: This would require a bulk delete function
-        // For now, we'll just clear the local state
-        console.warn('Bulk delete from database not implemented');
-      }
 
       // Clear local storage
       if (Platform.OS !== 'web') {
@@ -504,7 +375,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         playbackDuration,
         volume,
         highQualityEnabled,
-        isLoading,
         setVolume,
         setHighQualityEnabled,
         loadAndPlaySound,
@@ -518,7 +388,6 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toggleFavorite,
         updateSound,
         clearAllSounds,
-        syncSounds,
       }}
     >
       {children}

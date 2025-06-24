@@ -82,50 +82,6 @@ export interface Database {
           updated_at?: string | null
         }
       }
-      user_sounds: {
-        Row: {
-          id: string
-          user_id: string
-          name: string
-          description: string
-          category: string
-          tags: string[]
-          duration: number
-          file_path: string
-          file_size: number
-          is_favorite: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          name: string
-          description?: string
-          category?: string
-          tags?: string[]
-          duration?: number
-          file_path: string
-          file_size?: number
-          is_favorite?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          description?: string
-          category?: string
-          tags?: string[]
-          duration?: number
-          file_path?: string
-          file_size?: number
-          is_favorite?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-      }
       app_config: {
         Row: {
           id: string
