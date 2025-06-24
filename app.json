@@ -7,13 +7,14 @@
     "icon": "./assets/images/icon.png",
     "scheme": "calltuneai",
     "userInterfaceStyle": "dark",
+    "owner": "calltuneai",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#1A2C3E"
     },
     "assetBundlePatterns": [
-      "assets/**/*"
+      "**/*"
     ],
     "ios": {
       "supportsTablet": true,
@@ -31,7 +32,7 @@
           "backgroundColor": "#1A2C3E"
         }
       },
-      "buildNumber": "2",
+      "buildNumber": "1",
       "infoPlist": {
         "UIBackgroundModes": [
           "audio"
@@ -43,8 +44,7 @@
         "NSDocumentsFolderUsageDescription": "CallTuneAI needs access to your documents folder to store predator calls.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiresFullScreen": true
-      },
-      "appleTeamId": "4WS2DF8MLB"
+      }
     },
     "android": {
       "package": "com.calltuneai.player",
@@ -87,11 +87,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "1b3a481d-6444-4152-b02c-7653dd966d67"
-      }
     },
     "web": {
       "bundler": "metro",

@@ -34,12 +34,10 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "sheldon.charron@gmail.com",
-        "appleTeamId": "4WS2DF8MLB",
+        "appleId": "your-apple-id@example.com",
         "bundleIdentifier": "com.calltuneai.player"
       },
       "android": {
-        "serviceAccountKeyPath": "./path-to-your-key.json",
         "track": "internal"
       }
     }
