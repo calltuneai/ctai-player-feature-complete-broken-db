@@ -99,7 +99,6 @@ const SoundPlayer: React.FC = () => {
 
   const handleSeek = (event: any) => {
     if (Platform.OS === 'web') {
-      // Disable seeking on web to prevent crashes
       return;
     }
     
@@ -117,85 +116,36 @@ const SoundPlayer: React.FC = () => {
 
   const Container = Platform.OS === 'ios' ? BlurView : View;
   const containerProps = Platform.OS === 'ios' 
-    ? { intensity: 50, tint: "dark" as "dark" } 
+    ? { intensity: 80, tint: "dark" as "dark" } 
     : {};
-
-  // Web-safe volume control component
-  const VolumeControl = () => {
-    if (Platform.OS === 'web') {
-      return (
-        <View style={styles.volumeContainer}>
-          <Volume2 size={16} color="#AAAAAA" />
-          <View style={styles.webVolumeContainer}>
-            <Text style={styles.webVolumeText}>
-              Volume: {Math.round(volume * 100)}%
-            </Text>
-            <Text style={styles.webVolumeNote}>
-              (Use system volume controls)
-            </Text>
-          </View>
-        </View>
-      );
-    }
-
-    if (!Slider) {
-      return (
-        <View style={styles.volumeContainer}>
-          <Volume2 size={16} color="#AAAAAA" />
-          <Text style={styles.volumeText}>Volume: {Math.round(volume * 100)}%</Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.volumeContainer}>
-        <Volume2 size={16} color="#AAAAAA" />
-        <Slider
-          style={styles.volumeSlider}
-          minimumValue={0}
-          maximumValue={1}
-          value={volume}
-          onValueChange={handleVolumeChange}
-          minimumTrackTintColor={BRAND_COLORS.brightBlue}
-          maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
-          thumbStyle={{ 
-            backgroundColor: BRAND_COLORS.brightBlue,
-            width: 20,
-            height: 20,
-          }}
-          trackStyle={{ height: 4, borderRadius: 2 }}
-        />
-        <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
-      </View>
-    );
-  };
 
   return (
     <Container style={styles.container} {...containerProps}>
-      {/* Session Timer */}
-      <View style={styles.sessionHeader}>
-        <View style={styles.sessionTimer}>
-          <Timer size={16} color={BRAND_COLORS.brightBlue} />
-          <Text style={styles.sessionTimeText}>
-            Session: {formatElapsedTime(elapsedTime)}
-          </Text>
+      {/* Top Section - Sound Info & Session Timer */}
+      <View style={styles.topSection}>
+        <View style={styles.soundInfo}>
+          <Text style={styles.title} numberOfLines={1}>{currentSound.name}</Text>
+          <Text style={styles.category}>{currentSound.category}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.resetButton}
-          onPress={resetSessionTimer}
-        >
-          <Text style={styles.resetButtonText}>Reset</Text>
-        </TouchableOpacity>
+        
+        <View style={styles.sessionInfo}>
+          <View style={styles.sessionTimer}>
+            <Timer size={14} color={BRAND_COLORS.brightBlue} />
+            <Text style={styles.sessionTimeText}>
+              {formatElapsedTime(elapsedTime)}
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={resetSessionTimer}
+          >
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Sound Info */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={1}>{currentSound.name}</Text>
-        <Text style={styles.category}>{currentSound.category}</Text>
-      </View>
-      
-      {/* Progress Bar */}
-      <View style={styles.progressContainer}>
+      {/* Middle Section - Progress Bar */}
+      <View style={styles.progressSection}>
         <Text style={styles.time}>{formatTime(playbackPosition)}</Text>
         <TouchableOpacity 
           style={styles.progressBar} 
@@ -208,44 +158,78 @@ const SoundPlayer: React.FC = () => {
         <Text style={styles.time}>{formatTime(playbackDuration)}</Text>
       </View>
 
-      {/* Volume Control */}
-      <VolumeControl />
-      
-      {/* Controls */}
-      <View style={styles.controls}>
-        <TouchableOpacity 
-          style={styles.controlButton} 
-          onPress={() => Platform.OS !== 'web' && seekSound(Math.max(0, playbackPosition - 10))}
-          disabled={Platform.OS === 'web'}
-        >
-          <SkipBack size={24} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.playButton} 
-          onPress={isPlaying ? pauseSound : playSound}
-        >
-          {isPlaying ? (
-            <Pause size={28} color="#FFFFFF" />
+      {/* Bottom Section - Controls */}
+      <View style={styles.controlsSection}>
+        {/* Playback Controls */}
+        <View style={styles.playbackControls}>
+          <TouchableOpacity 
+            style={styles.controlButton} 
+            onPress={() => Platform.OS !== 'web' && seekSound(Math.max(0, playbackPosition - 10))}
+            disabled={Platform.OS === 'web'}
+          >
+            <SkipBack size={20} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.playButton} 
+            onPress={isPlaying ? pauseSound : playSound}
+          >
+            {isPlaying ? (
+              <Pause size={24} color="#FFFFFF" />
+            ) : (
+              <Play size={24} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.controlButton} 
+            onPress={() => Platform.OS !== 'web' && seekSound(Math.min(playbackDuration, playbackPosition + 10))}
+            disabled={Platform.OS === 'web'}
+          >
+            <SkipForward size={20} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.controlButton, isLooping && styles.activeControlButton]} 
+            onPress={toggleLooping}
+          >
+            <Repeat size={20} color={isLooping ? BRAND_COLORS.brightBlue : "#FFFFFF"} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Volume Control - Always at Bottom */}
+        <View style={styles.volumeSection}>
+          <Volume2 size={16} color="#AAAAAA" />
+          
+          {Platform.OS === 'web' ? (
+            <View style={styles.webVolumeContainer}>
+              <Text style={styles.webVolumeText}>
+                Volume: {Math.round(volume * 100)}% (Use system controls)
+              </Text>
+            </View>
+          ) : Slider ? (
+            <>
+              <Slider
+                style={styles.volumeSlider}
+                minimumValue={0}
+                maximumValue={1}
+                value={volume}
+                onValueChange={handleVolumeChange}
+                minimumTrackTintColor={BRAND_COLORS.brightBlue}
+                maximumTrackTintColor="rgba(255, 255, 255, 0.2)"
+                thumbStyle={{ 
+                  backgroundColor: BRAND_COLORS.brightBlue,
+                  width: 16,
+                  height: 16,
+                }}
+                trackStyle={{ height: 3, borderRadius: 2 }}
+              />
+              <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
+            </>
           ) : (
-            <Play size={28} color="#FFFFFF" />
+            <Text style={styles.volumeText}>Volume: {Math.round(volume * 100)}%</Text>
           )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.controlButton} 
-          onPress={() => Platform.OS !== 'web' && seekSound(Math.min(playbackDuration, playbackPosition + 10))}
-          disabled={Platform.OS === 'web'}
-        >
-          <SkipForward size={24} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.controlButton, isLooping && styles.activeControlButton]} 
-          onPress={toggleLooping}
-        >
-          <Repeat size={24} color={isLooping ? BRAND_COLORS.brightBlue : "#FFFFFF"} />
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Web Platform Notice */}
@@ -267,69 +251,72 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: Platform.OS === 'ios' ? 'transparent' : BRAND_COLORS.deepBlue,
-    padding: 16,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  sessionHeader: {
+  
+  // Top Section
+  topSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
-  sessionTimer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sessionTimeText: {
-    color: BRAND_COLORS.brightBlue,
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    marginLeft: 6,
-  },
-  resetButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-  },
-  resetButtonText: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  soundInfo: {
+    flex: 1,
+    marginRight: 12,
   },
   title: {
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
-    flex: 1,
+    marginBottom: 2,
   },
   category: {
     color: BRAND_COLORS.brightBlue,
     fontSize: 12,
     fontFamily: 'Inter-Medium',
-    marginLeft: 8,
   },
-  progressContainer: {
+  sessionInfo: {
+    alignItems: 'flex-end',
+  },
+  sessionTimer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 4,
+  },
+  sessionTimeText: {
+    color: BRAND_COLORS.brightBlue,
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+    marginLeft: 4,
+  },
+  resetButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+  },
+  resetButtonText: {
+    color: '#AAAAAA',
+    fontSize: 10,
+    fontFamily: 'Inter-Medium',
+  },
+
+  // Progress Section
+  progressSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   progressBar: {
     flex: 1,
     height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 2,
-    marginHorizontal: 8,
+    marginHorizontal: 12,
     overflow: 'hidden',
   },
   progressFill: {
@@ -340,24 +327,55 @@ const styles = StyleSheet.create({
     color: '#AAAAAA',
     fontSize: 12,
     fontFamily: 'Inter-Regular',
-    width: 40,
+    width: 35,
+    textAlign: 'center',
   },
-  volumeContainer: {
+
+  // Controls Section
+  controlsSection: {
+    gap: 12,
+  },
+  playbackControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  controlButton: {
+    padding: 8,
+    borderRadius: 16,
+  },
+  activeControlButton: {
+    backgroundColor: 'rgba(4, 150, 255, 0.2)',
+  },
+  playButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: BRAND_COLORS.brightBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+
+  // Volume Section - Fixed at Bottom
+  volumeSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
   volumeSlider: {
     flex: 1,
-    height: 30,
+    height: 24,
     marginHorizontal: 12,
   },
   volumeText: {
     color: '#AAAAAA',
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter-Regular',
-    width: 35,
+    width: 30,
     textAlign: 'right',
   },
   webVolumeContainer: {
@@ -366,47 +384,22 @@ const styles = StyleSheet.create({
   },
   webVolumeText: {
     color: '#AAAAAA',
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter-Regular',
   },
-  webVolumeNote: {
-    color: '#666666',
-    fontSize: 10,
-    fontFamily: 'Inter-Regular',
-    fontStyle: 'italic',
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  controlButton: {
-    padding: 12,
-  },
-  activeControlButton: {
-    backgroundColor: 'rgba(4, 150, 255, 0.2)',
-    borderRadius: 20,
-  },
-  playButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: BRAND_COLORS.brightBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 16,
-  },
+
+  // Web Notice
   webNotice: {
     marginTop: 8,
-    padding: 8,
+    padding: 6,
     backgroundColor: 'rgba(255, 165, 0, 0.1)',
-    borderRadius: 6,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.3)',
   },
   webNoticeText: {
     color: '#FFA500',
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
