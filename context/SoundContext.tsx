@@ -54,12 +54,15 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const initialize = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: false,
-        });
+        // Only set audio mode on non-web platforms
+        if (Platform.OS !== 'web') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            shouldDuckAndroid: false,
+          });
+        }
 
         // Load local sounds
         await loadLocalSounds();
@@ -75,7 +78,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       if (soundObject) {
-        soundObject.unloadAsync();
+        soundObject.unloadAsync().catch(console.error);
       }
     };
   }, []);
@@ -133,16 +136,16 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     saveSoundsLocally();
   }, [sounds, isInitialized]);
 
-  // Update volume when it changes
+  // Update volume when it changes (with web safety)
   useEffect(() => {
-    if (soundObject) {
-      soundObject.setVolumeAsync(volume);
+    if (soundObject && Platform.OS !== 'web') {
+      soundObject.setVolumeAsync(volume).catch(console.error);
     }
   }, [volume, soundObject]);
 
-  // Playback status updates
+  // Playback status updates (with web safety)
   useEffect(() => {
-    if (!soundObject) return;
+    if (!soundObject || Platform.OS === 'web') return;
 
     const interval = setInterval(async () => {
       try {
@@ -166,14 +169,23 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         await soundObject.unloadAsync();
       }
 
+      // Web-safe audio creation
+      const audioConfig = Platform.OS === 'web' 
+        ? {
+            shouldPlay: true,
+            isLooping: true,
+            volume: volume,
+          }
+        : {
+            shouldPlay: true,
+            isLooping: true,
+            volume: volume,
+            shouldCorrectPitch: highQualityEnabled,
+          };
+
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: sound.uri },
-        {
-          shouldPlay: true,
-          isLooping: true,
-          volume: volume,
-          shouldCorrectPitch: highQualityEnabled,
-        },
+        audioConfig,
         (status) => {
           if (status.isLoaded) {
             if (status.didJustFinish && !status.isLooping) {
@@ -227,7 +239,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const seekSound = async (position: number) => {
-    if (!soundObject) return;
+    if (!soundObject || Platform.OS === 'web') return;
     
     try {
       await soundObject.setPositionAsync(position * 1000);

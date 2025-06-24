@@ -4,7 +4,16 @@ import { Play, Pause, SkipBack, SkipForward, Repeat, Volume2, Timer } from 'luci
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSounds } from '../context/SoundContext';
 import { BlurView } from 'expo-blur';
-import Slider from '@react-native-community/slider';
+
+// Only import Slider on non-web platforms
+let Slider: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    Slider = require('@react-native-community/slider').default;
+  } catch (error) {
+    console.warn('Slider not available on this platform');
+  }
+}
 
 // CallTuneAI brand colors
 const BRAND_COLORS = {
@@ -89,16 +98,77 @@ const SoundPlayer: React.FC = () => {
   });
 
   const handleSeek = (event: any) => {
+    if (Platform.OS === 'web') {
+      // Disable seeking on web to prevent crashes
+      return;
+    }
+    
     const { locationX } = event.nativeEvent;
     const { width } = event.nativeEvent.layout;
     const position = (locationX / width) * playbackDuration;
     seekSound(position);
   };
 
+  const handleVolumeChange = (value: number) => {
+    if (Platform.OS !== 'web') {
+      setVolume(value);
+    }
+  };
+
   const Container = Platform.OS === 'ios' ? BlurView : View;
   const containerProps = Platform.OS === 'ios' 
     ? { intensity: 50, tint: "dark" as "dark" } 
     : {};
+
+  // Web-safe volume control component
+  const VolumeControl = () => {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.volumeContainer}>
+          <Volume2 size={16} color="#AAAAAA" />
+          <View style={styles.webVolumeContainer}>
+            <Text style={styles.webVolumeText}>
+              Volume: {Math.round(volume * 100)}%
+            </Text>
+            <Text style={styles.webVolumeNote}>
+              (Use system volume controls)
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (!Slider) {
+      return (
+        <View style={styles.volumeContainer}>
+          <Volume2 size={16} color="#AAAAAA" />
+          <Text style={styles.volumeText}>Volume: {Math.round(volume * 100)}%</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.volumeContainer}>
+        <Volume2 size={16} color="#AAAAAA" />
+        <Slider
+          style={styles.volumeSlider}
+          minimumValue={0}
+          maximumValue={1}
+          value={volume}
+          onValueChange={handleVolumeChange}
+          minimumTrackTintColor={BRAND_COLORS.brightBlue}
+          maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
+          thumbStyle={{ 
+            backgroundColor: BRAND_COLORS.brightBlue,
+            width: 20,
+            height: 20,
+          }}
+          trackStyle={{ height: 4, borderRadius: 2 }}
+        />
+        <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
+      </View>
+    );
+  };
 
   return (
     <Container style={styles.container} {...containerProps}>
@@ -129,8 +199,9 @@ const SoundPlayer: React.FC = () => {
         <Text style={styles.time}>{formatTime(playbackPosition)}</Text>
         <TouchableOpacity 
           style={styles.progressBar} 
-          activeOpacity={0.7}
+          activeOpacity={Platform.OS === 'web' ? 1 : 0.7}
           onPress={handleSeek}
+          disabled={Platform.OS === 'web'}
         >
           <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
         </TouchableOpacity>
@@ -138,33 +209,16 @@ const SoundPlayer: React.FC = () => {
       </View>
 
       {/* Volume Control */}
-      <View style={styles.volumeContainer}>
-        <Volume2 size={16} color="#AAAAAA" />
-        <Slider
-          style={styles.volumeSlider}
-          minimumValue={0}
-          maximumValue={1}
-          value={volume}
-          onValueChange={setVolume}
-          minimumTrackTintColor={BRAND_COLORS.brightBlue}
-          maximumTrackTintColor="rgba(255, 255, 255, 0.3)"
-          thumbStyle={{ 
-            backgroundColor: BRAND_COLORS.brightBlue,
-            width: 20,
-            height: 20,
-          }}
-          trackStyle={{ height: 4, borderRadius: 2 }}
-        />
-        <Text style={styles.volumeText}>{Math.round(volume * 100)}%</Text>
-      </View>
+      <VolumeControl />
       
       {/* Controls */}
       <View style={styles.controls}>
         <TouchableOpacity 
           style={styles.controlButton} 
-          onPress={() => seekSound(Math.max(0, playbackPosition - 10))}
+          onPress={() => Platform.OS !== 'web' && seekSound(Math.max(0, playbackPosition - 10))}
+          disabled={Platform.OS === 'web'}
         >
-          <SkipBack size={24} color="#FFFFFF" />
+          <SkipBack size={24} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -180,9 +234,10 @@ const SoundPlayer: React.FC = () => {
         
         <TouchableOpacity 
           style={styles.controlButton} 
-          onPress={() => seekSound(Math.min(playbackDuration, playbackPosition + 10))}
+          onPress={() => Platform.OS !== 'web' && seekSound(Math.min(playbackDuration, playbackPosition + 10))}
+          disabled={Platform.OS === 'web'}
         >
-          <SkipForward size={24} color="#FFFFFF" />
+          <SkipForward size={24} color={Platform.OS === 'web' ? "#666666" : "#FFFFFF"} />
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -192,6 +247,15 @@ const SoundPlayer: React.FC = () => {
           <Repeat size={24} color={isLooping ? BRAND_COLORS.brightBlue : "#FFFFFF"} />
         </TouchableOpacity>
       </View>
+
+      {/* Web Platform Notice */}
+      {Platform.OS === 'web' && (
+        <View style={styles.webNotice}>
+          <Text style={styles.webNoticeText}>
+            ⚠️ Limited functionality in web preview. Full features available on mobile.
+          </Text>
+        </View>
+      )}
     </Container>
   );
 };
@@ -296,6 +360,21 @@ const styles = StyleSheet.create({
     width: 35,
     textAlign: 'right',
   },
+  webVolumeContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  webVolumeText: {
+    color: '#AAAAAA',
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+  },
+  webVolumeNote: {
+    color: '#666666',
+    fontSize: 10,
+    fontFamily: 'Inter-Regular',
+    fontStyle: 'italic',
+  },
   controls: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -316,6 +395,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 16,
+  },
+  webNotice: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 165, 0, 0.3)',
+  },
+  webNoticeText: {
+    color: '#FFA500',
+    fontSize: 11,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'center',
   },
 });
 
