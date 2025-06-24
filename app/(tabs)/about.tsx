@@ -133,7 +133,7 @@ export default function AboutScreen() {
           
           <TouchableOpacity 
             style={styles.socialButton}
-            onPress={() => openLink('https://preyr.com')}
+            onPress={() => openLink('https://thepreyr.com')}
           >
             <ExternalLink size={20} color="#FFFFFF" />
             <Text style={styles.socialButtonText}>Visit PREYR Website</Text>
