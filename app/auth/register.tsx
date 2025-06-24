@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, CircleCheck as CheckCircle2, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
@@ -31,9 +31,6 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPasswordHints, setShowPasswordHints] = useState(false);
-  const [registrationStep, setRegistrationStep] = useState<'validating' | 'creating' | 'complete'>('validating');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -47,36 +44,24 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     try {
-      if (isSubmitted) {
-        setError('Registration already submitted. Please check your email for verification or try signing in.');
-        router.replace('/auth/login');
-        return;
-      }
-
       setLoading(true);
-      setRegistrationStep('validating');
       setError(null);
 
       if (!firstName || !lastName || !email || !password) {
         setError('Please fill in all required fields');
-        setLoading(false);
         return;
       }
       
       if (!validateEmail(email)) {
         setError('Please enter a valid email address. Disposable email services are not allowed.');
-        setLoading(false);
         return;
       }
 
       if (!validatePassword(password)) {
         setError('Password must be at least 6 characters long');
-        setLoading(false);
         return;
       }
 
-      setRegistrationStep('creating');
-      
       // Use deep link redirect for mobile app
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
@@ -115,10 +100,8 @@ export default function RegisterScreen() {
       }
 
       if (authData.user) {
-        setRegistrationStep('complete');
-        setIsSubmitted(true);
-        setShowSuccessMessage(true);
-        setError(null);
+        // Registration successful - redirect to login with a message
+        router.replace('/auth/login?message=check_email');
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -164,138 +147,115 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        {showSuccessMessage ? (
-          // Success State - Compact
-          <View style={styles.successContainer}>
-            <CheckCircle2 size={40} color="#4CD964" />
-            <Text style={styles.successTitle}>Account Created!</Text>
-            <Text style={styles.successText}>
-              Check your email to verify your account. The verification link will open directly in this app.
-            </Text>
-            
-            <TouchableOpacity
-              style={styles.successButton}
-              onPress={() => router.push('/auth/login')}
-            >
-              <Text style={styles.successButtonText}>Continue to Sign In</Text>
-              <ChevronRight size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          // Form State - Compact
-          <View style={styles.form}>
-            {/* Name Fields */}
-            <View style={styles.nameRow}>
-              <View style={[styles.inputContainer, styles.nameInput]}>
-                <User size={18} color="#AAAAAA" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="First Name"
-                  placeholderTextColor="#AAAAAA"
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                  editable={!loading}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.nameInput]}>
-                <User size={18} color="#AAAAAA" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Last Name"
-                  placeholderTextColor="#AAAAAA"
-                  value={lastName}
-                  onChangeText={setLastName}
-                  autoCapitalize="words"
-                  editable={!loading}
-                />
-              </View>
-            </View>
-
-            {/* Email Field */}
-            <View style={styles.inputContainer}>
-              <Mail size={18} color="#AAAAAA" />
+        {/* Form */}
+        <View style={styles.form}>
+          {/* Name Fields */}
+          <View style={styles.nameRow}>
+            <View style={[styles.inputContainer, styles.nameInput]}>
+              <User size={18} color="#AAAAAA" />
               <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder="First Name"
                 placeholderTextColor="#AAAAAA"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
                 editable={!loading}
               />
             </View>
-
-            {/* Password Field */}
-            <View style={styles.inputContainer}>
-              <Lock size={18} color="#AAAAAA" />
+            <View style={[styles.inputContainer, styles.nameInput]}>
+              <User size={18} color="#AAAAAA" />
               <TextInput
-                style={[styles.input, { paddingRight: 40 }]}
-                placeholder="Password"
+                style={styles.input}
+                placeholder="Last Name"
                 placeholderTextColor="#AAAAAA"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  setShowPasswordHints(text.length > 0);
-                }}
-                secureTextEntry={!showPassword}
-                onFocus={() => setShowPasswordHints(password.length > 0)}
-                onBlur={() => setShowPasswordHints(false)}
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
                 editable={!loading}
               />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff size={18} color="#AAAAAA" />
-                ) : (
-                  <Eye size={18} color="#AAAAAA" />
-                )}
-              </TouchableOpacity>
             </View>
-            
-            {/* Password Hints - Only show when needed */}
-            {showPasswordHints && (
-              <View style={styles.passwordHints}>
-                <Text style={[
-                  styles.passwordHint,
-                  password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
-                ]}>
-                  • At least 6 characters
-                </Text>
-              </View>
-            )}
+          </View>
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? (
-                  registrationStep === 'validating' ? 'Validating...' :
-                  registrationStep === 'creating' ? 'Creating Account...' :
-                  'Account Created!'
-                ) : 'Create Account'}
-              </Text>
-              {!loading && <ChevronRight size={18} color="#FFFFFF" />}
-            </TouchableOpacity>
+          {/* Email Field */}
+          <View style={styles.inputContainer}>
+            <Mail size={18} color="#AAAAAA" />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#AAAAAA"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
+          </View>
 
-            {/* Sign In Link */}
+          {/* Password Field */}
+          <View style={styles.inputContainer}>
+            <Lock size={18} color="#AAAAAA" />
+            <TextInput
+              style={[styles.input, { paddingRight: 40 }]}
+              placeholder="Password"
+              placeholderTextColor="#AAAAAA"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                setShowPasswordHints(text.length > 0);
+              }}
+              secureTextEntry={!showPassword}
+              onFocus={() => setShowPasswordHints(password.length > 0)}
+              onBlur={() => setShowPasswordHints(false)}
+              editable={!loading}
+            />
             <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push('/auth/login')}
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
             >
-              <Text style={styles.linkText}>
-                Already have an account? Sign in
-              </Text>
+              {showPassword ? (
+                <EyeOff size={18} color="#AAAAAA" />
+              ) : (
+                <Eye size={18} color="#AAAAAA" />
+              )}
             </TouchableOpacity>
           </View>
-        )}
+          
+          {/* Password Hints - Only show when needed */}
+          {showPasswordHints && (
+            <View style={styles.passwordHints}>
+              <Text style={[
+                styles.passwordHint,
+                password.length >= 6 ? styles.passwordHintValid : styles.passwordHintInvalid
+              ]}>
+                • At least 6 characters
+              </Text>
+            </View>
+          )}
+
+          {/* Submit Button */}
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleRegister}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Text>
+            {!loading && <ChevronRight size={18} color="#FFFFFF" />}
+          </TouchableOpacity>
+
+          {/* Sign In Link */}
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={() => router.push('/auth/login')}
+          >
+            <Text style={styles.linkText}>
+              Already have an account? Sign in
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -364,43 +324,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     fontSize: 13,
     lineHeight: 18,
-  },
-  successContainer: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(76, 217, 100, 0.1)',
-    borderRadius: 16,
-    padding: 24,
-  },
-  successTitle: {
-    fontSize: 20,
-    fontFamily: 'Orbitron-Bold',
-    color: '#4CD964',
-    marginTop: 12,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  successText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#FFFFFF',
-    lineHeight: 20,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  successButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#4CD964',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    gap: 6,
-  },
-  successButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontFamily: 'Inter-SemiBold',
   },
   form: {
     width: '100%',

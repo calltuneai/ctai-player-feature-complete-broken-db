@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Image,
   KeyboardAvoidingView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { storeAuthData } from '../../lib/auth';
-import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, CircleCheck as CheckCircle } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
@@ -24,11 +24,24 @@ const BRAND_COLORS = {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { message } = useLocalSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailMessage, setShowEmailMessage] = useState(false);
+
+  useEffect(() => {
+    if (message === 'check_email') {
+      setShowEmailMessage(true);
+      // Auto-hide the message after 10 seconds
+      const timer = setTimeout(() => {
+        setShowEmailMessage(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleLogin = async () => {
     try {
@@ -109,6 +122,25 @@ export default function LoginScreen() {
           <DynamicText style={styles.title}>Welcome Back</DynamicText>
           <DynamicText style={styles.subtitle}>Sign in to continue using CallTuneAI</DynamicText>
         </View>
+
+        {/* Email Verification Message */}
+        {showEmailMessage && (
+          <View style={styles.emailMessageContainer}>
+            <CheckCircle size={16} color="#4CD964" />
+            <View style={styles.emailMessageText}>
+              <Text style={styles.emailMessageTitle}>Account Created!</Text>
+              <Text style={styles.emailMessageSubtitle}>
+                Check your email to verify your account, then sign in below.
+              </Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => setShowEmailMessage(false)}
+              style={styles.dismissButton}
+            >
+              <Text style={styles.dismissText}>×</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Error Display - Same style as Register */}
         {error && (
@@ -244,6 +276,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#AAAAAA',
     textAlign: 'center',
+  },
+  emailMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(76, 217, 100, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 217, 100, 0.3)',
+  },
+  emailMessageText: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  emailMessageTitle: {
+    color: '#4CD964',
+    fontFamily: 'Inter-SemiBold',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  emailMessageSubtitle: {
+    color: '#FFFFFF',
+    fontFamily: 'Inter-Regular',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  dismissButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  dismissText: {
+    color: '#4CD964',
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
   },
   errorContainer: {
     flexDirection: 'row',
