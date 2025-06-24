@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, Platform, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Upload as UploadIcon, Plus, X } from 'lucide-react-native';
+import { Upload as UploadIcon, Plus, X, Play } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
@@ -106,6 +106,45 @@ export default function UploadScreen() {
     } catch (error) {
       console.error('Error picking document:', error);
       Alert.alert('Error', 'Failed to select audio file.');
+    }
+  };
+
+  const loadDemoFile = async () => {
+    try {
+      setIsUploading(true);
+      
+      // Get the demo file from assets
+      const demoFileUri = require('../../assets/audio/demo_rabbit_distress.wav');
+      
+      // Get audio duration
+      const { sound } = await Audio.Sound.createAsync(demoFileUri);
+      const status = await sound.getStatusAsync();
+      await sound.unloadAsync();
+      
+      const duration = status.durationMillis ? status.durationMillis / 1000 : 0;
+      
+      // Pre-fill form with demo data
+      setSoundName('Rabbit Distress Call (Demo)');
+      setDescription('Sample predator call - perfect for testing Bluetooth connectivity and audio playback');
+      setCategory('Distress');
+      setTags(['demo', 'rabbit', 'distress', 'sample']);
+      
+      setSelectedFile({
+        uri: demoFileUri,
+        name: 'demo_rabbit_distress.wav',
+        size: 0, // We don't need exact size for bundled assets
+        duration: duration,
+      });
+      
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      
+    } catch (error) {
+      console.error('Error loading demo file:', error);
+      Alert.alert('Error', 'Failed to load demo file.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -226,7 +265,9 @@ export default function UploadScreen() {
             <View style={styles.selectedFileContainer}>
               <Text style={styles.selectedFileName}>{selectedFile.name}</Text>
               <View style={styles.fileInfoRow}>
-                <Text style={styles.fileInfoText}>{formatFileSize(selectedFile.size)}</Text>
+                {selectedFile.size > 0 && (
+                  <Text style={styles.fileInfoText}>{formatFileSize(selectedFile.size)}</Text>
+                )}
                 <Text style={styles.fileInfoText}>{formatDuration(selectedFile.duration)}</Text>
               </View>
               <TouchableOpacity 
@@ -246,6 +287,24 @@ export default function UploadScreen() {
             </>
           )}
         </TouchableOpacity>
+
+        {/* Demo File Section */}
+        {!selectedFile && (
+          <View style={styles.demoSection}>
+            <Text style={styles.demoTitle}>Don't have an audio file?</Text>
+            <TouchableOpacity 
+              style={styles.demoButton}
+              onPress={loadDemoFile}
+              disabled={isUploading}
+            >
+              <Play size={20} color="#FFFFFF" />
+              <Text style={styles.demoButtonText}>Try Demo File</Text>
+            </TouchableOpacity>
+            <Text style={styles.demoDescription}>
+              Load a sample rabbit distress call to test the app's features and Bluetooth connectivity
+            </Text>
+          </View>
+        )}
 
         {/* Form Fields */}
         <View style={styles.formContainer}>
@@ -442,6 +501,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: BRAND_COLORS.brightBlue,
+  },
+  demoSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  demoTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  demoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: BRAND_COLORS.brightBlue,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 8,
+    shadowColor: BRAND_COLORS.brightBlue,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  demoButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#FFFFFF',
+  },
+  demoDescription: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#AAAAAA',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   formContainer: {
     flex: 1,
