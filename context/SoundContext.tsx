@@ -150,7 +150,7 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const interval = setInterval(async () => {
       try {
         const status = await soundObject.getStatusAsync();
-        if (status.isLoaded) {
+        if (status && status.isLoaded) {
           setPlaybackPosition((status.positionMillis || 0) / 1000);
           setPlaybackDuration((status.durationMillis || 0) / 1000);
           setIsPlaying(status.isPlaying || false);
@@ -190,14 +190,25 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         audioConfig.shouldCorrectPitch = highQualityEnabled;
       }
 
-      // Create status update callback with proper error handling
+      // Create status update callback with comprehensive error handling
       const onPlaybackStatusUpdate = (status: any) => {
         try {
-          if (status && status.isLoaded) {
+          // Check if status exists and has required properties
+          if (!status) {
+            console.warn('Received undefined status in playback update');
+            return;
+          }
+
+          // Only process if status is loaded
+          if (status.isLoaded === true) {
             if (status.didJustFinish && !status.isLooping) {
               setIsPlaying(false);
               setPlaybackPosition(0);
             }
+          } else if (status.error) {
+            console.error('Audio playback error:', status.error);
+            setIsPlaying(false);
+            setCurrentSound(null);
           }
         } catch (error) {
           console.error('Error in playback status update:', error);
