@@ -322,7 +322,7 @@ export default function RegisterScreen() {
             {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
-          {/* Sign In Link */}
+          {/* Sign In Link - Fixed spacing */}
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => router.push('/auth/login')}
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 60 : 40, // Increased bottom padding significantly
   },
   header: {
     alignItems: 'center',
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0496FF',
     borderRadius: 8,
     height: 50,
-    marginBottom: 16,
+    marginBottom: 24, // Increased from 16 to 24
     gap: 6,
   },
   buttonDisabled: {
@@ -519,7 +519,8 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 16, // Increased from 8 to 16 for more touch area
+    marginBottom: 20, // Added bottom margin for extra space
   },
   linkText: {
     color: '#0496FF',
