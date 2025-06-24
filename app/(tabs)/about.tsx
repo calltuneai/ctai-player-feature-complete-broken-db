@@ -157,13 +157,6 @@ export default function AboutScreen() {
             
             <TouchableOpacity 
               style={styles.socialIconButton}
-              onPress={() => openLink('https://twitter.com/calltuneai')}
-            >
-              <Twitter size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.socialIconButton}
               onPress={() => openLink('https://instagram.com/calltuneai')}
             >
               <Instagram size={24} color="#FFFFFF" />
