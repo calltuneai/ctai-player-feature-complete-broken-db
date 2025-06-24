@@ -8,10 +8,12 @@ import {
   Platform,
   Image,
   KeyboardAvoidingView,
+  ScrollView,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, User, ChevronRight, CircleAlert as AlertCircle, Eye, EyeOff, ExternalLink } from 'lucide-react-native';
 import DynamicText from '../../components/DynamicText';
 
 const BRAND_COLORS = {
@@ -31,6 +33,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPasswordHints, setShowPasswordHints] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -42,6 +45,18 @@ export default function RegisterScreen() {
     return password.length >= 6;
   };
 
+  const openTermsAndConditions = () => {
+    Linking.openURL('https://calltuneai.com/terms').catch((err) => {
+      console.error('Error opening terms URL:', err);
+    });
+  };
+
+  const openPrivacyPolicy = () => {
+    Linking.openURL('https://calltuneai.com/privacy').catch((err) => {
+      console.error('Error opening privacy URL:', err);
+    });
+  };
+
   const handleRegister = async () => {
     try {
       setLoading(true);
@@ -49,6 +64,11 @@ export default function RegisterScreen() {
 
       if (!firstName || !lastName || !email || !password) {
         setError('Please fill in all required fields');
+        return;
+      }
+
+      if (!termsAccepted) {
+        setError('You must agree to the Terms and Conditions to create an account');
         return;
       }
       
@@ -62,6 +82,19 @@ export default function RegisterScreen() {
         return;
       }
 
+      // Get user's IP address for legal tracking (optional)
+      let userIP = null;
+      try {
+        if (Platform.OS === 'web') {
+          const ipResponse = await fetch('https://api.ipify.org?format=json');
+          const ipData = await ipResponse.json();
+          userIP = ipData.ip;
+        }
+      } catch (ipError) {
+        console.log('Could not get IP address:', ipError);
+        // Continue without IP - not critical
+      }
+
       // Use direct redirect to login page for both web and mobile
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase(),
@@ -69,7 +102,10 @@ export default function RegisterScreen() {
         options: {
           data: {
             first_name: firstName.trim(),
-            last_name: lastName.trim()
+            last_name: lastName.trim(),
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: '1.0',
+            terms_ip_address: userIP
           },
           // Direct redirect to login page with verification parameter
           emailRedirectTo: Platform.OS === 'web' 
@@ -121,7 +157,11 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Prominent Branding Header */}
         <View style={styles.header}>
           <Image
@@ -237,17 +277,49 @@ export default function RegisterScreen() {
             </View>
           )}
 
+          {/* Terms and Conditions Agreement */}
+          <View style={styles.termsContainer}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setTermsAccepted(!termsAccepted)}
+              disabled={loading}
+            >
+              <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+                {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <View style={styles.termsTextContainer}>
+                <Text style={styles.termsText}>
+                  I agree to the{' '}
+                  <Text style={styles.termsLink} onPress={openTermsAndConditions}>
+                    Terms and Conditions
+                  </Text>
+                  {' '}and{' '}
+                  <Text style={styles.termsLink} onPress={openPrivacyPolicy}>
+                    Privacy Policy
+                  </Text>
+                  . I confirm that I will only upload sounds that I own or have permission to use. I understand that I am responsible for ensuring all uploaded content complies with copyright laws and that CallTuneAI is not liable for any copyright violations.
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
           {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[
+              styles.button, 
+              (loading || !termsAccepted) && styles.buttonDisabled
+            ]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !termsAccepted}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>
+            <Text style={[
+              styles.buttonText,
+              !termsAccepted && styles.buttonTextDisabled
+            ]}>
               {loading ? 'Creating Account...' : 'Create Account'}
             </Text>
-            {!loading && <ChevronRight size={18} color="#FFFFFF" />}
+            {!loading && termsAccepted && <ChevronRight size={18} color="#FFFFFF" />}
           </TouchableOpacity>
 
           {/* Sign In Link */}
@@ -260,7 +332,7 @@ export default function RegisterScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -270,12 +342,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1A2C3E',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 24,
-    justifyContent: 'center',
+    paddingBottom: 40,
   },
   header: {
     alignItems: 'center',
@@ -381,6 +454,48 @@ const styles = StyleSheet.create({
   passwordHintInvalid: {
     color: '#FF3B30',
   },
+  termsContainer: {
+    marginBottom: 24,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#AAAAAA',
+    backgroundColor: 'transparent',
+    marginRight: 12,
+    marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: BRAND_COLORS.brightBlue,
+    borderColor: BRAND_COLORS.brightBlue,
+  },
+  checkmark: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontFamily: 'Inter-Bold',
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
+  termsText: {
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+    color: '#DDDDDD',
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: BRAND_COLORS.brightBlue,
+    fontFamily: 'Inter-SemiBold',
+    textDecorationLine: 'underline',
+  },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,12 +507,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    backgroundColor: 'rgba(4, 150, 255, 0.5)',
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
+  },
+  buttonTextDisabled: {
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   linkButton: {
     alignItems: 'center',

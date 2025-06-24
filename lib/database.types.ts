@@ -21,6 +21,9 @@ export interface Database {
           is_trial_expired: boolean | null
           is_verified: boolean | null
           last_verified_at: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
+          terms_ip_address: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -35,6 +38,9 @@ export interface Database {
           is_trial_expired?: boolean | null
           is_verified?: boolean | null
           last_verified_at?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
+          terms_ip_address?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -49,6 +55,9 @@ export interface Database {
           is_trial_expired?: boolean | null
           is_verified?: boolean | null
           last_verified_at?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
+          terms_ip_address?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
